@@ -1,16 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
-import { Dices, Loader2, RefreshCcw, ShieldCheck } from "lucide-react";
+import { Loader2, RefreshCcw, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Metric } from "@/components/metric";
+import { DrawRevealDialog } from "@/components/draw-reveal-dialog";
 import { useToast } from "@/components/ui/toast";
 import { formatDateTime } from "@/lib/utils";
 
@@ -66,7 +65,6 @@ function CommentTable({ comments, empty }: { comments: CommentRow[]; empty: stri
 }
 
 export function ReviewComments({ giveawayId }: { giveawayId: string }) {
-  const router = useRouter();
   const { toast } = useToast();
   const [validData, setValidData] = React.useState<CommentResponse | null>(null);
   const [invalidData, setInvalidData] = React.useState<CommentResponse | null>(null);
@@ -101,20 +99,6 @@ export function ReviewComments({ giveawayId }: { giveawayId: string }) {
 
     toast({ title: "Comentarios validados", description: `${data.valid} validos e ${data.invalid} invalidos.` });
     await load();
-  }
-
-  async function draw() {
-    setIsMutating(true);
-    const response = await fetch(`/api/giveaways/${giveawayId}/draw`, { method: "POST" });
-    const data = await response.json().catch(() => ({}));
-    setIsMutating(false);
-
-    if (!response.ok) {
-      toast({ title: "Sorteio nao realizado", description: data.error });
-      return;
-    }
-
-    router.push(`/resultado/${giveawayId}`);
   }
 
   const stats = validData?.stats ?? invalidData?.stats ?? {
@@ -159,28 +143,12 @@ export function ReviewComments({ giveawayId }: { giveawayId: string }) {
           {isMutating ? <Loader2 className="size-4 animate-spin" /> : <RefreshCcw className="size-4" />}
           Validar novamente
         </Button>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button disabled={isMutating || stats.valid === 0}>
-              <Dices className="size-4" />
-              Realizar sorteio
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Realizar sorteio agora?</DialogTitle>
-              <DialogDescription>
-                O resultado sera gravado com seed criptografica e nao podera ser sorteado novamente.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button onClick={draw} disabled={isMutating}>
-                {isMutating ? <Loader2 className="size-4 animate-spin" /> : <Dices className="size-4" />}
-                Confirmar sorteio
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <DrawRevealDialog
+          giveawayId={giveawayId}
+          participants={validData?.comments ?? []}
+          validCount={stats.valid}
+          disabled={isMutating || stats.valid === 0}
+        />
       </div>
 
       <Card>

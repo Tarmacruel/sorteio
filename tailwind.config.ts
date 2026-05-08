@@ -69,10 +69,26 @@ const config: Config = {
           "0%": { transform: "translateY(-20%)" },
           "100%": { transform: "translateY(120%)" },
         },
+        "draw-pop": {
+          "0%": { opacity: "0", transform: "translateY(10px) scale(0.96)" },
+          "70%": { opacity: "1", transform: "translateY(0) scale(1.025)" },
+          "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
+        },
+        "draw-glow": {
+          "0%, 100%": { boxShadow: "0 0 0 0 rgb(13 148 136 / 0.28)" },
+          "50%": { boxShadow: "0 0 0 18px rgb(13 148 136 / 0)" },
+        },
+        "draw-ticker": {
+          "0%, 100%": { transform: "translateX(-8px)" },
+          "50%": { transform: "translateX(8px)" },
+        },
       },
       animation: {
         "fade-up": "fade-up 700ms cubic-bezier(.22,1,.36,1) both",
         "scan-line": "scan-line 3.8s ease-in-out infinite",
+        "draw-pop": "draw-pop 520ms cubic-bezier(.22,1,.36,1) both",
+        "draw-glow": "draw-glow 1.5s ease-out infinite",
+        "draw-ticker": "draw-ticker 520ms ease-in-out infinite",
       },
     },
   },
