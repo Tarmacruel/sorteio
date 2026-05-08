@@ -55,6 +55,20 @@ function serializeRule(rule: RuleForm) {
   return rule;
 }
 
+async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit = {}, timeoutMs = 12_000) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
 export function GiveawayWizard() {
   const router = useRouter();
   const { toast } = useToast();
@@ -142,10 +156,23 @@ export function GiveawayWizard() {
     setCapturePreparationMessage("Preparando captura...");
     setIsSubmitting(true);
 
-    const response = await fetch(`/api/giveaways/${giveawayId}/capture`, {
-      method: "POST",
-    });
-    const data = await response.json().catch(() => ({}));
+    let response: Response;
+    let data: { error?: string } = {};
+
+    try {
+      response = await fetchWithTimeout(`/api/giveaways/${giveawayId}/capture`, {
+        method: "POST",
+      });
+      data = await response.json().catch(() => ({}));
+    } catch {
+      setIsSubmitting(false);
+      setCapturePreparationMessage(null);
+      toast({
+        title: "Captura nao iniciada",
+        description: "A solicitacao demorou demais. Verifique Redis, worker e tente novamente.",
+      });
+      return;
+    }
 
     if (!response.ok) {
       setIsSubmitting(false);

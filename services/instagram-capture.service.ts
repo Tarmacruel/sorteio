@@ -14,6 +14,7 @@ type CaptureLog = {
 type ExtractedComment = {
   username: string;
   text: string;
+  instagramCommentId?: string | null;
   commentedAt?: string | null;
   rawData?: Prisma.InputJsonObject;
 };
@@ -47,11 +48,23 @@ async function failCapture(input: {
   captureJobId: string;
   message: string;
   technicalError?: unknown;
+  details?: Prisma.InputJsonObject;
 }) {
   const errorMessage = input.message;
+  const technicalError =
+    input.technicalError instanceof Error
+      ? {
+          name: input.technicalError.name,
+          message: input.technicalError.message,
+          stack: input.technicalError.stack?.slice(0, 2000) ?? null,
+        }
+      : input.technicalError
+        ? { message: String(input.technicalError) }
+        : null;
 
   await appendCaptureLog(input.captureJobId, errorMessage, {
-    technicalError: input.technicalError instanceof Error ? input.technicalError.message : String(input.technicalError ?? ""),
+    ...(input.details ?? {}),
+    technicalError,
   });
 
   await prisma.instagramCaptureJob.update({
@@ -72,7 +85,7 @@ async function failCapture(input: {
   await registerAuditLog({
     giveawayId: input.giveawayId,
     action: "capture_failed",
-    payload: { errorMessage },
+    payload: { errorMessage, technicalError, details: input.details ?? {} },
   });
 
   throw new Error(errorMessage);
@@ -107,6 +120,42 @@ async function detectPublicAccessProblem(page: Page) {
   return null;
 }
 
+async function collectPageDiagnostics(page?: Page): Promise<Prisma.InputJsonObject> {
+  if (!page) return {};
+
+  return page
+    .evaluate<Prisma.InputJsonObject>(String.raw`
+      (() => {
+      const buttonTexts = Array.from(document.querySelectorAll("button"))
+        .map((button) => button.textContent ? button.textContent.trim() : "")
+        .filter(Boolean)
+        .slice(0, 12);
+
+      const bodyText = document.body && document.body.innerText ? document.body.innerText.replace(/\s+/g, " ").trim() : "";
+
+      return {
+        currentUrl: window.location.href,
+        title: document.title,
+        bodySnippet: bodyText.slice(0, 800),
+        selectorCounts: {
+          articles: document.querySelectorAll("article").length,
+          articleLists: document.querySelectorAll("article ul").length,
+          articleListItems: document.querySelectorAll("article ul li").length,
+          commentPermalinks: document.querySelectorAll('a[href*="/c/"]').length,
+          links: document.querySelectorAll("a[href]").length,
+          buttons: document.querySelectorAll("button").length,
+          timeTags: document.querySelectorAll("time").length,
+        },
+        buttonTexts,
+      };
+      })()
+    `)
+    .catch((error) => ({
+      diagnosticsError: error instanceof Error ? error.message : String(error),
+      currentUrl: page.url(),
+    }));
+}
+
 async function clickLoadMore(page: Page) {
   const button = page
     .getByRole("button")
@@ -126,47 +175,154 @@ async function clickLoadMore(page: Page) {
 }
 
 async function extractVisibleComments(page: Page): Promise<ExtractedComment[]> {
-  return page.evaluate(() => {
-    const usernameFromHref = (href: string | null) => {
+  return page.evaluate<ExtractedComment[]>(String.raw`
+    (() => {
+    const usernameFromHref = (href) => {
       if (!href) return null;
       const pathname = new URL(href, window.location.origin).pathname;
       const match = pathname.match(/^\/([A-Za-z0-9._]+)\/?$/);
-      return match?.[1] ?? null;
+      return match ? match[1] : null;
+    };
+
+    const isCommentPermalink = (href) => Boolean(href && /\/p\/[^/]+\/c\/[0-9]+\/?/.test(href));
+    const commentIdFromHref = (href) => {
+      const match = href ? href.match(/\/c\/([0-9]+)\/?/) : null;
+      return match ? match[1] : null;
+    };
+    const isStopText = (value) => /^(Curtir|Responder|Ver traducao|Ver tradução|[0-9]+ curtida[s]?|Ocultar respostas|Ver respostas)$/i.test(value);
+    const normalizeText = (value) => value.replace(/\s+/g, " ").trim();
+    const comments = [];
+    const seenIds = new Set();
+
+    const pushComment = (comment) => {
+      const key = comment.instagramCommentId || comment.username + "|" + comment.text;
+      if (!comment.username || !comment.text || seenIds.has(key)) return;
+      seenIds.add(key);
+      comments.push(comment);
     };
 
     const nodes = Array.from(document.querySelectorAll("article ul li"));
-    const comments: ExtractedComment[] = [];
 
     for (const node of nodes) {
-      const anchors = Array.from(node.querySelectorAll<HTMLAnchorElement>("a[href]"));
+      const anchors = Array.from(node.querySelectorAll("a[href]"));
       const usernameAnchor = anchors.find((anchor) => usernameFromHref(anchor.getAttribute("href")));
-      const username = usernameFromHref(usernameAnchor?.getAttribute("href") ?? null);
+      const username = usernameFromHref(usernameAnchor ? usernameAnchor.getAttribute("href") : null);
 
       if (!username) continue;
 
       const spanTexts = Array.from(node.querySelectorAll("span"))
-        .map((span) => span.textContent?.trim() ?? "")
+        .map((span) => span.textContent ? span.textContent.trim() : "")
         .filter(Boolean)
         .filter((text) => text !== username);
 
       const text = Array.from(new Set(spanTexts)).join(" ").trim();
-      const time = node.querySelector("time")?.getAttribute("datetime") ?? null;
+      const timeNode = node.querySelector("time");
+      const time = timeNode ? timeNode.getAttribute("datetime") : null;
 
       if (!text) continue;
 
-      comments.push({
+      pushComment({
         username,
         text,
         commentedAt: time,
         rawData: {
           source: "article ul li",
-          href: usernameAnchor?.getAttribute("href") ?? null,
+          href: usernameAnchor ? usernameAnchor.getAttribute("href") : null,
+        },
+      });
+    }
+
+    const permalinkAnchors = Array.from(document.querySelectorAll('a[href*="/c/"]')).filter((anchor) =>
+      isCommentPermalink(anchor.getAttribute("href"))
+    );
+
+    for (const timeAnchor of permalinkAnchors) {
+      const href = timeAnchor.getAttribute("href");
+      const commentId = commentIdFromHref(href);
+      if (!commentId) continue;
+
+      let container = timeAnchor.parentElement;
+      let selected = null;
+
+      for (let depth = 0; container && depth < 10; depth += 1) {
+        const text = normalizeText(container.textContent || "");
+        const anchors = Array.from(container.querySelectorAll("a[href]"));
+        const hasTime = anchors.includes(timeAnchor);
+        const hasResponder = /Responder/i.test(text);
+
+        if (hasTime && anchors.length >= 2 && text.length <= 900 && (hasResponder || depth >= 2)) {
+          selected = container;
+          break;
+        }
+
+        container = container.parentElement;
+      }
+
+      if (!selected) continue;
+
+      const anchors = Array.from(selected.querySelectorAll("a[href]"));
+      const timeIndex = anchors.indexOf(timeAnchor);
+      const usernameAnchor = anchors
+        .slice(0, Math.max(timeIndex, 0))
+        .reverse()
+        .find((anchor) => {
+          const username = usernameFromHref(anchor.getAttribute("href"));
+          const label = normalizeText(anchor.textContent || "");
+          return username && label && !label.startsWith("@");
+        });
+
+      const username = usernameFromHref(usernameAnchor ? usernameAnchor.getAttribute("href") : null);
+      if (!username) continue;
+
+      const pieces = [];
+      const walker = document.createTreeWalker(selected, NodeFilter.SHOW_TEXT);
+      let afterTime = false;
+
+      while (walker.nextNode()) {
+        const textNode = walker.currentNode;
+        const value = normalizeText(textNode.textContent || "");
+        if (!value) continue;
+
+        if (timeAnchor.contains(textNode)) {
+          afterTime = true;
+          continue;
+        }
+
+        if (!afterTime) continue;
+        if (isStopText(value)) break;
+        if (value === username) continue;
+
+        pieces.push(value);
+      }
+
+      let text = normalizeText(pieces.join(" "));
+
+      if (!text) {
+        text = anchors
+          .slice(timeIndex + 1)
+          .map((anchor) => normalizeText(anchor.textContent || ""))
+          .filter(Boolean)
+          .filter((value) => !isStopText(value))
+          .join(" ");
+      }
+
+      if (!text) continue;
+
+      pushComment({
+        username,
+        text,
+        instagramCommentId: commentId,
+        commentedAt: null,
+        rawData: {
+          source: "comment permalink anchor",
+          href,
         },
       });
     }
 
     return comments;
-  });
+    })()
+  `);
 }
 
 function dedupeComments(comments: ExtractedComment[]) {
@@ -174,7 +330,7 @@ function dedupeComments(comments: ExtractedComment[]) {
   const unique: ExtractedComment[] = [];
 
   for (const comment of comments) {
-    const signature = createCommentSignature(comment);
+    const signature = comment.instagramCommentId ?? createCommentSignature(comment);
     if (seen.has(signature)) continue;
     seen.add(signature);
     unique.push(comment);
@@ -187,6 +343,16 @@ function parseCommentedAt(value?: string | null) {
   if (!value) return null;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function isKnownCaptureFailure(error: unknown) {
+  if (!(error instanceof Error)) return false;
+
+  return (
+    error.message === captureMessages.unavailable ||
+    error.message.includes("coleta apenas comentarios publicamente acessiveis") ||
+    error.message.includes("Informe a URL publica")
+  );
 }
 
 export async function captureInstagramComments(input: {
@@ -223,6 +389,7 @@ export async function captureInstagramComments(input: {
   });
 
   let browser;
+  let page: Page | undefined;
 
   try {
     await appendCaptureLog(input.captureJobId, captureMessages.opening);
@@ -231,7 +398,7 @@ export async function captureInstagramComments(input: {
       locale: "pt-BR",
       viewport: { width: 1366, height: 900 },
     });
-    const page = await context.newPage();
+    page = await context.newPage();
 
     await page.goto(input.postUrl, {
       waitUntil: "domcontentloaded",
@@ -244,6 +411,7 @@ export async function captureInstagramComments(input: {
         giveawayId: input.giveawayId,
         captureJobId: input.captureJobId,
         message: accessProblem,
+        details: await collectPageDiagnostics(page),
       });
     }
 
@@ -291,6 +459,20 @@ export async function captureInstagramComments(input: {
     await appendCaptureLog(input.captureJobId, captureMessages.dedupe);
     const uniqueComments = dedupeComments(Array.from(collected.values()));
 
+    if (uniqueComments.length === 0) {
+      await failCapture({
+        giveawayId: input.giveawayId,
+        captureJobId: input.captureJobId,
+        message: captureMessages.unavailable,
+        details: {
+          ...(await collectPageDiagnostics(page)),
+          possibleCause:
+            "A estrutura do Instagram pode ter mudado, os comentarios podem nao estar publicamente visiveis ou a publicacao pode exigir login.",
+          commentsExtractedBeforeSave: 0,
+        },
+      });
+    }
+
     await appendCaptureLog(input.captureJobId, captureMessages.saving, {
       total: uniqueComments.length,
     });
@@ -301,7 +483,7 @@ export async function captureInstagramComments(input: {
           giveawayId: input.giveawayId,
           username: comment.username,
           text: comment.text,
-          instagramCommentId: createCommentSignature(comment),
+          instagramCommentId: comment.instagramCommentId ?? createCommentSignature(comment),
           commentedAt: parseCommentedAt(comment.commentedAt),
           rawData: (comment.rawData ?? {}) as Prisma.InputJsonObject,
         })),
@@ -351,7 +533,7 @@ export async function captureInstagramComments(input: {
       commentsSaved,
     };
   } catch (error) {
-    if (error instanceof Error && error.message === captureMessages.unavailable) {
+    if (isKnownCaptureFailure(error)) {
       throw error;
     }
 
@@ -360,6 +542,7 @@ export async function captureInstagramComments(input: {
       captureJobId: input.captureJobId,
       message: captureMessages.unavailable,
       technicalError: error,
+      details: await collectPageDiagnostics(page),
     });
   } finally {
     await browser?.close().catch(() => undefined);

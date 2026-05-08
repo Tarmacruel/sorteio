@@ -62,7 +62,18 @@ Garanta tambem que o Redis local esteja rodando em `redis://localhost:6379`, poi
 
 ## Execucao
 
-Em um terminal, rode o app:
+Use os scripts locais sem Docker:
+
+```bat
+scripts\setup-sorteio.bat
+scripts\start-sorteio.bat
+scripts\status-sorteio.bat
+scripts\stop-sorteio.bat
+```
+
+O `start-sorteio.bat` inicia PostgreSQL local quando houver servico, Redis em `localhost:6379`, worker BullMQ e Next.js. Logs ficam em `logs/`.
+
+Execucao manual alternativa:
 
 ```bash
 npm run dev
@@ -106,7 +117,7 @@ Responsabilidades implementadas:
 
 ## Limitacoes tecnicas e de seguranca
 
-Esta versao coleta apenas comentarios publicamente acessiveis. Ela nao burla CAPTCHA, nao tenta contornar bloqueios, nao faz fingerprint spoofing, nao usa rotacao agressiva de proxy, nao força login e nao solicita ou armazena senha do Instagram.
+Esta versao coleta apenas comentarios publicamente acessiveis. Ela nao burla CAPTCHA, nao tenta contornar bloqueios, nao faz fingerprint spoofing, nao usa rotacao agressiva de proxy, nao forca login e nao solicita ou armazena senha do Instagram.
 
 Se a postagem exigir login, estiver indisponivel, for privada, estiver bloqueada ou o Instagram limitar o carregamento, o sistema registra falha tecnica e informa uma mensagem amigavel ao usuario.
 

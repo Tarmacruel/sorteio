@@ -15,6 +15,7 @@ import { formatDateTime } from "@/lib/utils";
 type CaptureLog = {
   at: string;
   message: string;
+  details?: Record<string, unknown> | null;
 };
 
 type CaptureState = {
@@ -28,6 +29,7 @@ type CaptureState = {
     commentsSaved: number;
     currentStep: string;
     logs: CaptureLog[];
+    createdAt?: string | null;
   } | null;
   giveaway: {
     status: string;
@@ -57,6 +59,78 @@ function formatElapsedTime(startedAt?: string | null, finishedAt?: string | null
   if (hours > 0) return `${hours}h ${String(minutes).padStart(2, "0")}m`;
   if (minutes > 0) return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
   return `${seconds}s`;
+}
+
+async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit = {}, timeoutMs = 12_000) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+function formatTechnicalDetails(details?: Record<string, unknown> | null) {
+  if (!details || Object.keys(details).length === 0) return null;
+  return JSON.stringify(details, null, 2);
+}
+
+function asRecord(value: unknown) {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+}
+
+function formatDiagnosticSummary(details?: Record<string, unknown> | null) {
+  if (!details) return [];
+
+  const items: string[] = [];
+  const currentUrl = typeof details.currentUrl === "string" ? details.currentUrl : null;
+  const title = typeof details.title === "string" ? details.title : null;
+  const possibleCause = typeof details.possibleCause === "string" ? details.possibleCause : null;
+  const selectorCounts = asRecord(details.selectorCounts);
+  const technicalError = asRecord(details.technicalError);
+
+  if (currentUrl?.includes("/accounts/login")) {
+    items.push("O Instagram redirecionou o navegador automatizado para a tela de login.");
+  } else if (currentUrl) {
+    items.push(`URL final acessada pelo Playwright: ${currentUrl}`);
+  }
+
+  if (title) {
+    items.push(`Titulo da pagina carregada: ${title}`);
+  }
+
+  if (selectorCounts) {
+    const commentPermalinks = selectorCounts.commentPermalinks;
+    const articleListItems = selectorCounts.articleListItems;
+    const links = selectorCounts.links;
+
+    if (typeof commentPermalinks === "number" && commentPermalinks === 0) {
+      items.push("Nenhum permalink publico de comentario foi encontrado no HTML carregado.");
+    }
+
+    if (typeof articleListItems === "number" && articleListItems === 0) {
+      items.push("Nenhum item de comentario foi encontrado nos seletores principais.");
+    }
+
+    if (typeof links === "number") {
+      items.push(`Links detectados na pagina: ${links}.`);
+    }
+  }
+
+  if (possibleCause) {
+    items.push(`Causa provavel: ${possibleCause}`);
+  }
+
+  if (typeof technicalError?.message === "string") {
+    items.push(`Erro tecnico original: ${technicalError.message}`);
+  }
+
+  return items;
 }
 
 export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
@@ -90,8 +164,21 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
 
   async function startCapture() {
     setIsMutating(true);
-    const response = await fetch(`/api/giveaways/${giveawayId}/capture`, { method: "POST" });
-    const data = await response.json().catch(() => ({}));
+    let response: Response;
+    let data: { error?: string } = {};
+
+    try {
+      response = await fetchWithTimeout(`/api/giveaways/${giveawayId}/capture`, { method: "POST" });
+      data = await response.json().catch(() => ({}));
+    } catch {
+      setIsMutating(false);
+      toast({
+        title: "Captura nao iniciada",
+        description: "A solicitacao demorou demais. Verifique Redis, worker e tente novamente.",
+      });
+      return;
+    }
+
     setIsMutating(false);
 
     if (!response.ok) {
@@ -105,8 +192,21 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
 
   async function cancelCapture() {
     setIsMutating(true);
-    const response = await fetch(`/api/giveaways/${giveawayId}/capture`, { method: "DELETE" });
-    const data = await response.json().catch(() => ({}));
+    let response: Response;
+    let data: { error?: string } = {};
+
+    try {
+      response = await fetchWithTimeout(`/api/giveaways/${giveawayId}/capture`, { method: "DELETE" });
+      data = await response.json().catch(() => ({}));
+    } catch {
+      setIsMutating(false);
+      toast({
+        title: "Cancelamento nao realizado",
+        description: "A solicitacao demorou demais. Tente atualizar a pagina e cancelar novamente.",
+      });
+      return;
+    }
+
     setIsMutating(false);
 
     if (!response.ok) {
@@ -122,7 +222,12 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
   const rawLogs = Array.isArray(job?.logs) ? job.logs : [];
   const logs = rawLogs.slice(-8).reverse();
   const latestLog = rawLogs.at(-1);
-  const isActive = job?.status === "queued" || job?.status === "running";
+  const latestTechnicalDetails = [...rawLogs].reverse().find((log) => log.details)?.details ?? null;
+  const formattedLatestDetails = formatTechnicalDetails(latestTechnicalDetails);
+  const diagnosticSummary = formatDiagnosticSummary(latestTechnicalDetails);
+  const isQueuedOrRunning = job?.status === "queued" || job?.status === "running";
+  const isActive = isQueuedOrRunning && state?.giveaway?.status === "capturing";
+  const canCancel = isQueuedOrRunning;
   const isCompleted = job?.status === "completed";
   const isFailed = job?.status === "failed" || state?.giveaway?.status === "capture_failed";
   const isCancelled = job?.status === "cancelled";
@@ -130,6 +235,8 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
   const activeStep = job?.status === "queued" ? "Aguardando worker iniciar..." : job?.currentStep;
   const elapsedTime = formatElapsedTime(job?.startedAt, job?.finishedAt, now);
   const lastUpdatedAt = latestLog?.at ?? job?.startedAt ?? job?.finishedAt ?? null;
+  const queuedForMs = job?.status === "queued" && job.createdAt ? now - new Date(job.createdAt).getTime() : 0;
+  const isQueuedTooLong = queuedForMs > 60_000;
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
@@ -201,6 +308,28 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
 
               <Progress value={isCompleted ? 100 : undefined} indeterminate={!isCompleted && !isFailed} />
 
+              {isQueuedOrRunning && !isActive ? (
+                <Alert>
+                  <AlertCircle className="size-4" />
+                  <AlertTitle>Captura anterior ficou pendente</AlertTitle>
+                  <AlertDescription>
+                    Este job ficou registrado como pendente, mas o sorteio nao esta mais em captura. Voce pode cancelar
+                    este job antigo ou iniciar uma nova captura automatica.
+                  </AlertDescription>
+                </Alert>
+              ) : null}
+
+              {isQueuedTooLong ? (
+                <Alert variant="destructive">
+                  <AlertCircle className="size-4" />
+                  <AlertTitle>Worker ainda nao iniciou a captura</AlertTitle>
+                  <AlertDescription>
+                    O job esta na fila ha mais de 1 minuto. Verifique se o Redis local esta rodando em `localhost:6379`
+                    e se o worker foi iniciado com `npm run worker:dev`.
+                  </AlertDescription>
+                </Alert>
+              ) : null}
+
               {isActive ? (
                 <div className="grid gap-3 rounded-md border bg-secondary/40 p-4 sm:grid-cols-3">
                   <div>
@@ -226,12 +355,41 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
                   <AlertCircle className="size-4" />
                   <AlertTitle>Falha tecnica na captura</AlertTitle>
                   <AlertDescription>
-                    {job.errorMessage ?? "Nao foi possivel capturar comentarios publicamente disponiveis desta postagem."}
+                    <div className="space-y-3">
+                      <p>{job.errorMessage ?? "Nao foi possivel capturar comentarios publicamente disponiveis desta postagem."}</p>
+                      {diagnosticSummary.length > 0 ? (
+                        <div className="rounded-md border border-destructive/30 bg-background p-3 text-foreground">
+                          <div className="text-sm font-semibold">Diagnostico da tentativa</div>
+                          <ul className="mt-2 list-disc space-y-1 pl-4 text-xs">
+                            {diagnosticSummary.map((item) => (
+                              <li key={item}>{item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
+                      {formattedLatestDetails ? (
+                        <details className="rounded-md border border-destructive/30 bg-background p-3 text-left">
+                          <summary className="cursor-pointer font-medium">Ver detalhes tecnicos para investigacao</summary>
+                          <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words text-xs text-foreground">
+                            {formattedLatestDetails}
+                          </pre>
+                        </details>
+                      ) : null}
+                    </div>
                   </AlertDescription>
                 </Alert>
               ) : null}
 
-              {isCompleted ? (
+              {isCompleted && capturedCount === 0 ? (
+                <Alert variant="destructive">
+                  <AlertCircle className="size-4" />
+                  <AlertTitle>Captura concluida sem comentarios</AlertTitle>
+                  <AlertDescription>
+                    Nenhum comentario foi salvo para este sorteio. Inicie uma nova captura para gerar um diagnostico
+                    atualizado antes de revisar participantes.
+                  </AlertDescription>
+                </Alert>
+              ) : isCompleted ? (
                 <Alert>
                   <CheckCircle2 className="size-4" />
                   <AlertTitle>Captura concluida</AlertTitle>
@@ -270,7 +428,7 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
               {isMutating ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4" />}
               Iniciar captura automatica
             </Button>
-            <Button variant="outline" onClick={cancelCapture} disabled={isMutating || !isActive}>
+            <Button variant="outline" onClick={cancelCapture} disabled={isMutating || !canCancel}>
               <Ban className="size-4" />
               Cancelar captura
             </Button>
@@ -307,23 +465,38 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
           ) : (
             <div className="space-y-3">
               {logs.map((log, index) => (
-                <div
-                  key={`${log.at}-${index}`}
-                  className={`rounded-md border-l-2 p-3 ${
-                    index === 0 ? "border-primary bg-primary/5" : "border-primary/35 bg-transparent"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="text-sm font-medium">{log.message}</div>
-                    {index === 0 ? <Badge variant="secondary">mais recente</Badge> : null}
-                  </div>
-                  <div className="text-xs text-muted-foreground">{formatDateTime(log.at)}</div>
-                </div>
+                <LogEntry key={`${log.at}-${index}`} log={log} isLatest={index === 0} />
               ))}
             </div>
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function LogEntry({ log, isLatest }: { log: CaptureLog; isLatest: boolean }) {
+  const formattedDetails = formatTechnicalDetails(log.details);
+
+  return (
+    <div
+      className={`rounded-md border-l-2 p-3 ${
+        isLatest ? "border-primary bg-primary/5" : "border-primary/35 bg-transparent"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-sm font-medium">{log.message}</div>
+        {isLatest ? <Badge variant="secondary">mais recente</Badge> : null}
+      </div>
+      <div className="text-xs text-muted-foreground">{formatDateTime(log.at)}</div>
+      {formattedDetails ? (
+        <details className="mt-3 rounded-md border bg-background p-3">
+          <summary className="cursor-pointer text-xs font-medium text-muted-foreground">Detalhes tecnicos</summary>
+          <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-words text-xs">
+            {formattedDetails}
+          </pre>
+        </details>
+      ) : null}
     </div>
   );
 }

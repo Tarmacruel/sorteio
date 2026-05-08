@@ -2,15 +2,39 @@ import { Queue } from "bullmq";
 import IORedis from "ioredis";
 
 const redisUrl = process.env.REDIS_URL ?? "redis://localhost:6379";
+const queueUnavailableMessage =
+  "Nao foi possivel conectar ao Redis local. Inicie o Redis em localhost:6379 e execute o worker de captura.";
 
 let connection: IORedis | null = null;
 let instagramCaptureQueue: Queue | null = null;
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string) {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(message));
+    }, timeoutMs);
+
+    promise
+      .then((value) => {
+        clearTimeout(timer);
+        resolve(value);
+      })
+      .catch((error) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+  });
+}
+
 function getRedisConnection() {
   if (!connection) {
     connection = new IORedis(redisUrl, {
+      connectTimeout: 3000,
+      enableOfflineQueue: false,
       maxRetriesPerRequest: null,
+      retryStrategy: () => null,
     });
+    connection.on("error", () => undefined);
   }
 
   return connection;
@@ -42,14 +66,24 @@ export async function enqueueInstagramCapture(input: {
   postUrl: string;
   captureJobId: string;
 }) {
-  return getInstagramCaptureQueue().add("capture", input, {
-    jobId: input.captureJobId,
-  });
+  const queue = getInstagramCaptureQueue();
+
+  await withTimeout(queue.waitUntilReady(), 3500, queueUnavailableMessage);
+
+  return withTimeout(
+    queue.add("capture", input, {
+      jobId: input.captureJobId,
+    }),
+    5000,
+    queueUnavailableMessage,
+  );
 }
 
 export async function removeInstagramCaptureJob(jobId: string) {
-  const job = await getInstagramCaptureQueue()
-    .getJob(jobId)
-    .catch(() => null);
+  const queue = getInstagramCaptureQueue();
+
+  await withTimeout(queue.waitUntilReady(), 3500, queueUnavailableMessage);
+
+  const job = await queue.getJob(jobId).catch(() => null);
   await job?.remove().catch(() => undefined);
 }

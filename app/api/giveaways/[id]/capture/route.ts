@@ -86,12 +86,25 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
 
     return NextResponse.json({ captureJob }, { status: 202 });
   } catch (error) {
+    const friendlyMessage =
+      "Nao foi possivel conectar ao Redis local para enfileirar a captura. Inicie o Redis em localhost:6379 e execute o worker de captura.";
+
     await prisma.instagramCaptureJob.update({
       where: { id: captureJob.id },
       data: {
         status: "failed",
         finishedAt: new Date(),
-        errorMessage: "Nao foi possivel conectar ao Redis para enfileirar a captura.",
+        currentStep: friendlyMessage,
+        errorMessage: friendlyMessage,
+        logs: [
+          {
+            at: new Date().toISOString(),
+            message: "Falha ao enfileirar captura automatica.",
+            details: {
+              error: error instanceof Error ? error.message : String(error),
+            },
+          },
+        ],
       },
     });
 
@@ -101,7 +114,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     });
 
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Nao foi possivel iniciar a captura." },
+      { error: friendlyMessage },
       { status: 503 },
     );
   }
@@ -121,7 +134,7 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
     return NextResponse.json({ error: "Nao ha captura ativa para cancelar." }, { status: 404 });
   }
 
-  await removeInstagramCaptureJob(captureJob.id);
+  await removeInstagramCaptureJob(captureJob.id).catch(() => undefined);
 
   await prisma.instagramCaptureJob.update({
     where: { id: captureJob.id },
