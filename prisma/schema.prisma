@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(cuid())
+  name      String
+  email     String     @unique
+  giveaways Giveaway[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Giveaway {
+  id                   String                @id @default(cuid())
+  userId               String?
+  user                 User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
+  title                String
+  instagramPostUrl     String
+  organizerUsername    String
+  description          String?
+  status               String                @default("draft")
+  winnersCount         Int                   @default(1)
+  alternatesCount      Int                   @default(0)
+  oneChancePerUser     Boolean               @default(true)
+  allowMultipleEntries Boolean               @default(false)
+  commentDeadline      DateTime?
+  drawSeed             String?
+  participantsHash     String?
+  capturedAt           DateTime?
+  drawnAt              DateTime?
+  rules                GiveawayRule[]
+  captureJobs          InstagramCaptureJob[]
+  comments             Comment[]
+  drawResults          DrawResult[]
+  auditLogs            AuditLog[]
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model GiveawayRule {
+  id         String   @id @default(cuid())
+  giveawayId String
+  giveaway   Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+  type       String
+  enabled    Boolean  @default(false)
+  config     Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([giveawayId, type])
+  @@index([giveawayId])
+}
+
+model InstagramCaptureJob {
+  id            String    @id @default(cuid())
+  giveawayId    String
+  giveaway      Giveaway  @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+  status        String    @default("queued")
+  startedAt     DateTime?
+  finishedAt    DateTime?
+  errorMessage  String?
+  commentsFound Int       @default(0)
+  commentsSaved Int       @default(0)
+  currentStep   String    @default("Aguardando captura...")
+  logs          Json
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([giveawayId])
+  @@index([status])
+}
+
+model Comment {
+  id                 String       @id @default(cuid())
+  giveawayId         String
+  giveaway           Giveaway     @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+  username           String
+  text               String       @db.Text
+  instagramCommentId String?
+  commentedAt        DateTime?
+  rawData            Json?
+  isValid            Boolean      @default(false)
+  invalidReason      String?
+  drawResults        DrawResult[]
+  createdAt          DateTime     @default(now())
+
+  @@unique([giveawayId, instagramCommentId])
+  @@index([giveawayId])
+  @@index([username])
+  @@index([isValid])
+}
+
+model DrawResult {
+  id         String   @id @default(cuid())
+  giveawayId String
+  giveaway   Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+  commentId  String
+  comment    Comment  @relation(fields: [commentId], references: [id], onDelete: Restrict)
+  username   String
+  position   Int
+  type       String
+  createdAt  DateTime @default(now())
+
+  @@unique([giveawayId, position, type])
+  @@index([giveawayId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  giveawayId String
+  giveaway   Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+  action     String
+  payload    Json
+  createdAt  DateTime @default(now())
+
+  @@index([giveawayId])
+  @@index([action])
+}
