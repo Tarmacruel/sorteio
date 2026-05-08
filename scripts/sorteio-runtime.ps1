@@ -218,12 +218,6 @@ function Start-App {
     return
   }
 
-  if (Test-Port 3000) {
-    "http://127.0.0.1:3000" | Set-Content -Path $AppUrlFile
-    Write-Host "Web App: porta 3000 ja esta em uso. Mantendo URL http://127.0.0.1:3000."
-    return
-  }
-
   $port = Find-FreePort 3000 3010
   $url = "http://127.0.0.1:$port"
   $npm = Get-NpmCommand
@@ -339,7 +333,7 @@ function Invoke-Status {
   Write-Host ("PostgreSQL: " + $(if ($postgres) { "$($postgres.Status) ($($postgres.Name))" } else { "servico nao encontrado" }))
   Write-Host ("Redis 6379: " + $(if (Test-Port 6379) { "rodando" } else { "parado" }))
   Write-Host ("Worker: " + $(if (Get-AlivePid $WorkerPidFile) { "rodando (PID $(Get-AlivePid $WorkerPidFile))" } else { "parado" }))
-  Write-Host ("Web App: " + $(if ((Get-AlivePid $AppPidFile) -or (Test-Port 3000)) { "rodando em $appUrl" } else { "parado" }))
+  Write-Host ("Web App: " + $(if (Get-AlivePid $AppPidFile) { "rodando em $appUrl" } else { "parado" }))
   Write-Host "Logs: $LogDir"
 }
 

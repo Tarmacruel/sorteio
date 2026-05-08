@@ -15,7 +15,9 @@ export const captureStatuses = [
   "queued",
   "running",
   "completed",
+  "partial_completed",
   "failed",
+  "blocked",
   "cancelled",
 ] as const;
 

@@ -75,8 +75,8 @@ export function ReviewComments({ giveawayId }: { giveawayId: string }) {
 
   const load = React.useCallback(async () => {
     const [validResponse, invalidResponse] = await Promise.all([
-      fetch(`/api/giveaways/${giveawayId}/comments?valid=true&take=250`, { cache: "no-store" }),
-      fetch(`/api/giveaways/${giveawayId}/comments?valid=false&take=250`, { cache: "no-store" }),
+      fetch(`/api/giveaways/${giveawayId}/comments?valid=true&take=1000`, { cache: "no-store" }),
+      fetch(`/api/giveaways/${giveawayId}/comments?valid=false&take=1000`, { cache: "no-store" }),
     ]);
 
     setValidData((await validResponse.json()) as CommentResponse);
@@ -149,7 +149,8 @@ export function ReviewComments({ giveawayId }: { giveawayId: string }) {
         <ShieldCheck className="size-4" />
         <AlertTitle>Regras aplicadas automaticamente</AlertTitle>
         <AlertDescription>
-          Comentarios invalidos mantem o motivo de exclusao para auditoria. A tela mostra ate 250 itens por aba.
+          Comentarios invalidos mantem o motivo de exclusao para auditoria. A tela mostra ate 1000 itens por aba; as
+          exportacoes incluem a base completa.
         </AlertDescription>
       </Alert>
 

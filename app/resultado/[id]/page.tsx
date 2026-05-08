@@ -90,6 +90,14 @@ export default async function PublicResultPage({ params }: { params: Promise<{ i
           </Alert>
         ) : null}
 
+        {latestCapture?.warningMessage ? (
+          <Alert className="mb-6">
+            <AlertTriangle className="size-4" />
+            <AlertTitle>Captura parcial</AlertTitle>
+            <AlertDescription>{latestCapture.warningMessage}</AlertDescription>
+          </Alert>
+        ) : null}
+
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardContent className="pt-6">

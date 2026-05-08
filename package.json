@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
+    "instagram:auth": "tsx scripts/instagram-auth.ts",
     "worker:dev": "tsx workers/instagram-capture.worker.ts",
     "worker:start": "node dist/workers/instagram-capture.worker.js",
     "prisma:generate": "prisma generate",

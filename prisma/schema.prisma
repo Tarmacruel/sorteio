@@ -61,19 +61,21 @@ model GiveawayRule {
 }
 
 model InstagramCaptureJob {
-  id            String    @id @default(cuid())
-  giveawayId    String
-  giveaway      Giveaway  @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
-  status        String    @default("queued")
-  startedAt     DateTime?
-  finishedAt    DateTime?
-  errorMessage  String?
-  commentsFound Int       @default(0)
-  commentsSaved Int       @default(0)
-  currentStep   String    @default("Aguardando captura...")
-  logs          Json
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                    String    @id @default(cuid())
+  giveawayId            String
+  giveaway              Giveaway  @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+  status                String    @default("queued")
+  startedAt             DateTime?
+  finishedAt            DateTime?
+  errorMessage          String?
+  warningMessage        String?
+  expectedCommentsCount Int?
+  commentsFound         Int       @default(0)
+  commentsSaved         Int       @default(0)
+  currentStep           String    @default("Aguardando captura...")
+  logs                  Json
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   @@index([giveawayId])
   @@index([status])

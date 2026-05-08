@@ -25,6 +25,8 @@ type CaptureState = {
     startedAt?: string | null;
     finishedAt?: string | null;
     errorMessage?: string | null;
+    warningMessage?: string | null;
+    expectedCommentsCount?: number | null;
     commentsFound: number;
     commentsSaved: number;
     currentStep: string;
@@ -229,9 +231,13 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
   const isActive = isQueuedOrRunning && state?.giveaway?.status === "capturing";
   const canCancel = isQueuedOrRunning;
   const isCompleted = job?.status === "completed";
-  const isFailed = job?.status === "failed" || state?.giveaway?.status === "capture_failed";
+  const isPartial = job?.status === "partial_completed";
+  const isBlocked = job?.status === "blocked";
+  const isFailed = job?.status === "failed" || (state?.giveaway?.status === "capture_failed" && !isBlocked);
   const isCancelled = job?.status === "cancelled";
+  const canReview = isCompleted || isPartial;
   const capturedCount = Math.max(state?.stats.captured ?? 0, job?.commentsFound ?? 0, job?.commentsSaved ?? 0);
+  const expectedCount = job?.expectedCommentsCount ?? null;
   const activeStep = job?.status === "queued" ? "Aguardando worker iniciar..." : job?.currentStep;
   const elapsedTime = formatElapsedTime(job?.startedAt, job?.finishedAt, now);
   const lastUpdatedAt = latestLog?.at ?? job?.startedAt ?? job?.finishedAt ?? null;
@@ -289,7 +295,9 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
 
               <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                 <div>
-                  <Badge variant={isFailed ? "destructive" : isCompleted ? "secondary" : "default"}>{job.status}</Badge>
+                  <Badge variant={isFailed || isBlocked ? "destructive" : isCompleted || isPartial ? "secondary" : "default"}>
+                    {job.status}
+                  </Badge>
                   <h2 className="mt-3 text-2xl font-semibold tracking-normal">{activeStep}</h2>
                   <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
                     <span className="inline-flex items-center gap-1.5">
@@ -298,6 +306,7 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
                     </span>
                     <span>Ultima atualizacao: {formatDateTime(lastUpdatedAt)}</span>
                     <span>Inicio: {formatDateTime(job.startedAt)}</span>
+                    {expectedCount ? <span>Informados pelo Instagram: {expectedCount}</span> : null}
                   </div>
                 </div>
                 <Button variant="outline" onClick={load}>
@@ -306,7 +315,10 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
                 </Button>
               </div>
 
-              <Progress value={isCompleted ? 100 : undefined} indeterminate={!isCompleted && !isFailed} />
+              <Progress
+                value={isCompleted || isPartial ? 100 : undefined}
+                indeterminate={!isCompleted && !isPartial && !isFailed && !isBlocked}
+              />
 
               {isQueuedOrRunning && !isActive ? (
                 <Alert>
@@ -337,20 +349,57 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
                     <div className="mt-1 text-sm font-medium">{activeStep}</div>
                   </div>
                   <div>
-                    <div className="text-xs font-medium uppercase text-muted-foreground">Comentarios localizados</div>
+                    <div className="text-xs font-medium uppercase text-muted-foreground">Comentarios capturados</div>
                     <div className="mt-1 text-sm font-medium">{capturedCount}</div>
                   </div>
                   <div>
-                    <div className="text-xs font-medium uppercase text-muted-foreground">Atualizacao automatica</div>
-                    <div className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium">
-                      <Activity className="size-4 text-primary" />
-                      A cada 2,5s
+                    <div className="text-xs font-medium uppercase text-muted-foreground">
+                      {expectedCount ? "Informados pelo Instagram" : "Atualizacao automatica"}
                     </div>
+                    {expectedCount ? (
+                      <div className="mt-1 text-sm font-medium">{expectedCount}</div>
+                    ) : (
+                      <div className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium">
+                        <Activity className="size-4 text-primary" />
+                        A cada 2,5s
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : null}
 
-              {isFailed ? (
+              {isBlocked ? (
+                <Alert variant="destructive">
+                  <AlertCircle className="size-4" />
+                  <AlertTitle>Captura bloqueada pelo Instagram</AlertTitle>
+                  <AlertDescription>
+                    <div className="space-y-3">
+                      <p>
+                        {job.errorMessage ??
+                          "Nao foi possivel continuar: Instagram solicitou login, verificacao ou bloqueou o carregamento."}
+                      </p>
+                      {diagnosticSummary.length > 0 ? (
+                        <div className="rounded-md border border-destructive/30 bg-background p-3 text-foreground">
+                          <div className="text-sm font-semibold">Diagnostico da tentativa</div>
+                          <ul className="mt-2 list-disc space-y-1 pl-4 text-xs">
+                            {diagnosticSummary.map((item) => (
+                              <li key={item}>{item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
+                      {formattedLatestDetails ? (
+                        <details className="rounded-md border border-destructive/30 bg-background p-3 text-left">
+                          <summary className="cursor-pointer font-medium">Ver detalhes tecnicos para investigacao</summary>
+                          <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words text-xs text-foreground">
+                            {formattedLatestDetails}
+                          </pre>
+                        </details>
+                      ) : null}
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              ) : isFailed ? (
                 <Alert variant="destructive">
                   <AlertCircle className="size-4" />
                   <AlertTitle>Falha tecnica na captura</AlertTitle>
@@ -380,7 +429,16 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
                 </Alert>
               ) : null}
 
-              {isCompleted && capturedCount === 0 ? (
+              {isPartial ? (
+                <Alert>
+                  <AlertCircle className="size-4" />
+                  <AlertTitle>Captura parcial concluida</AlertTitle>
+                  <AlertDescription>
+                    {job.warningMessage ??
+                      `Foram capturados ${capturedCount}${expectedCount ? ` de ${expectedCount}` : ""} comentarios. O Instagram nao carregou novos comentarios apos varias tentativas.`}
+                  </AlertDescription>
+                </Alert>
+              ) : isCompleted && capturedCount === 0 ? (
                 <Alert variant="destructive">
                   <AlertCircle className="size-4" />
                   <AlertTitle>Captura concluida sem comentarios</AlertTitle>
@@ -411,7 +469,10 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
             </div>
           ) : null}
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-4">
+            <div className="rounded-md border p-4">
+              <Metric label="informados" value={expectedCount ?? "-"} />
+            </div>
             <div className="rounded-md border p-4">
               <Metric label="capturados" value={state?.stats.captured ?? 0} />
             </div>
@@ -432,12 +493,19 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
               <Ban className="size-4" />
               Cancelar captura
             </Button>
-            <Button asChild variant="secondary" disabled={!isCompleted}>
-              <Link href={`/sorteios/${giveawayId}/revisao`}>
+            {canReview ? (
+              <Button asChild variant="secondary">
+                <Link href={`/sorteios/${giveawayId}/revisao`}>
+                  <CheckCircle2 className="size-4" />
+                  Revisar comentarios
+                </Link>
+              </Button>
+            ) : (
+              <Button variant="secondary" disabled>
                 <CheckCircle2 className="size-4" />
                 Revisar comentarios
-              </Link>
-            </Button>
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>

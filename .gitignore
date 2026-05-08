@@ -11,3 +11,6 @@ test-results
 tsconfig.tsbuildinfo
 .runtime/
 logs/
+storage/
+*.auth.json
+dump.rdb

@@ -7,7 +7,8 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   const { id } = await context.params;
   const { searchParams } = new URL(request.url);
   const validity = searchParams.get("valid");
-  const take = Math.min(Number(searchParams.get("take") ?? 100), 500);
+  const parsedTake = Number(searchParams.get("take") ?? 100);
+  const take = Math.min(Number.isFinite(parsedTake) && parsedTake > 0 ? parsedTake : 100, 5000);
 
   const where = {
     giveawayId: id,

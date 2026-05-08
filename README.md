@@ -38,6 +38,11 @@ Copie `.env.example` para `.env`:
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/sorteio?schema=public"
 REDIS_URL="redis://localhost:6379"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
+INSTAGRAM_AUTH_STATE_PATH="storage/instagram-auth.json"
+INSTAGRAM_CAPTURE_MAX_ITERATIONS=2500
+INSTAGRAM_CAPTURE_NO_GROWTH_LIMIT=30
+INSTAGRAM_CAPTURE_SCROLL_DELAY_MS=1000
+INSTAGRAM_CAPTURE_TIMEOUT_MS=3600000
 ```
 
 ## Instalacao local
@@ -59,6 +64,14 @@ npx playwright install chromium
 ```
 
 Garanta tambem que o Redis local esteja rodando em `redis://localhost:6379`, pois a captura automatica usa BullMQ.
+
+Para usar uma sessao autenticada do Instagram no worker, rode:
+
+```bash
+npm run instagram:auth
+```
+
+O script abre o Chromium em modo visivel para login manual e salva somente o `storageState` em `storage/instagram-auth.json`. Usuario e senha nao sao salvos pela aplicacao.
 
 ## Execucao
 
@@ -107,10 +120,12 @@ Responsabilidades implementadas:
 - Validar URL de publicacao do Instagram.
 - Abrir Chromium headless.
 - Acessar a postagem publica.
+- Usar `storage/instagram-auth.json` quando existir, sem armazenar credenciais.
 - Clicar em botoes de "ver mais comentarios" quando disponiveis.
-- Rolar a pagina progressivamente.
+- Rolar o painel de comentarios progressivamente.
 - Extrair username, texto e data/hora quando disponivel.
 - Remover duplicidades por hash.
+- Registrar captura parcial quando o Instagram nao carregar todos os comentarios informados.
 - Salvar comentarios no PostgreSQL.
 - Atualizar status, contadores e logs tecnicos.
 - Registrar auditoria de inicio, conclusao e falha.

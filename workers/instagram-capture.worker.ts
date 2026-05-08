@@ -57,16 +57,37 @@ worker.on("failed", async (job, error) => {
 
   if (!data) return;
 
-  await prisma.instagramCaptureJob
-    .update({
+  const currentJob = await prisma.instagramCaptureJob
+    .findUnique({
       where: { id: data.captureJobId },
-      data: {
-        status: "failed",
-        finishedAt: new Date(),
-        errorMessage: error.message,
-      },
+      select: { status: true },
     })
-    .catch(() => undefined);
+    .catch(() => null);
+
+  const serviceHandledFailure = currentJob?.status === "failed" || currentJob?.status === "blocked";
+
+  if (serviceHandledFailure) {
+    await prisma.instagramCaptureJob
+      .update({
+        where: { id: data.captureJobId },
+        data: {
+          finishedAt: new Date(),
+          errorMessage: error.message,
+        },
+      })
+      .catch(() => undefined);
+  } else {
+    await prisma.instagramCaptureJob
+      .update({
+        where: { id: data.captureJobId },
+        data: {
+          status: "failed",
+          finishedAt: new Date(),
+          errorMessage: error.message,
+        },
+      })
+      .catch(() => undefined);
+  }
 
   await registerAuditLog({
     giveawayId: data.giveawayId,

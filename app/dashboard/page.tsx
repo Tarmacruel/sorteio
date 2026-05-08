@@ -145,34 +145,47 @@ export default async function DashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {giveaways.map((giveaway) => (
-                  <TableRow key={giveaway.id}>
-                    <TableCell>
-                      <div className="font-medium">{giveaway.title}</div>
-                      <div className="max-w-xs truncate text-xs text-muted-foreground">{giveaway.instagramPostUrl}</div>
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={giveaway.status} />
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-muted-foreground">
-                        {giveaway.captureJobs[0]?.currentStep ?? "Sem captura"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">{giveaway._count.comments}</TableCell>
-                    <TableCell className="text-right">{giveaway.valid}</TableCell>
-                    <TableCell className="text-right">{giveaway.invalid}</TableCell>
-                    <TableCell>{formatDateTime(giveaway.createdAt)}</TableCell>
-                    <TableCell className="space-x-2 text-right">
-                      <Button asChild variant="outline" size="sm">
-                        <Link href={`/sorteios/${giveaway.id}/captura`}>Captura</Link>
-                      </Button>
-                      <Button asChild variant="ghost" size="sm">
-                        <Link href={`/resultado/${giveaway.id}`}>Resultado</Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {giveaways.map((giveaway) => {
+                  const latestCapture = giveaway.captureJobs[0];
+                  return (
+                    <TableRow key={giveaway.id}>
+                      <TableCell>
+                        <div className="font-medium">{giveaway.title}</div>
+                        <div className="max-w-xs truncate text-xs text-muted-foreground">{giveaway.instagramPostUrl}</div>
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={giveaway.status} />
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm text-muted-foreground">
+                          {latestCapture?.currentStep ?? "Sem captura"}
+                        </div>
+                        {latestCapture?.expectedCommentsCount ? (
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            {giveaway._count.comments}/{latestCapture.expectedCommentsCount} comentarios
+                          </div>
+                        ) : null}
+                        {latestCapture?.warningMessage ? (
+                          <div className="mt-1 max-w-sm text-xs font-medium text-amber-700">
+                            {latestCapture.warningMessage}
+                          </div>
+                        ) : null}
+                      </TableCell>
+                      <TableCell className="text-right">{giveaway._count.comments}</TableCell>
+                      <TableCell className="text-right">{giveaway.valid}</TableCell>
+                      <TableCell className="text-right">{giveaway.invalid}</TableCell>
+                      <TableCell>{formatDateTime(giveaway.createdAt)}</TableCell>
+                      <TableCell className="space-x-2 text-right">
+                        <Button asChild variant="outline" size="sm">
+                          <Link href={`/sorteios/${giveaway.id}/captura`}>Captura</Link>
+                        </Button>
+                        <Button asChild variant="ghost" size="sm">
+                          <Link href={`/resultado/${giveaway.id}`}>Resultado</Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
