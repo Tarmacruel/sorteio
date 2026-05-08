@@ -36,6 +36,7 @@ type RevealItem = DrawRevealParticipant & {
 };
 
 type RevealStage = "confirming" | "drawing" | "countdown" | "rolling" | "revealed" | "finished";
+type RevealAnimation = "ticker" | "sealed_card" | "slot_machine";
 
 type DrawRevealDialogProps = {
   giveawayId: string;
@@ -43,6 +44,28 @@ type DrawRevealDialogProps = {
   validCount: number;
   disabled?: boolean;
 };
+
+const revealAnimations: Array<{
+  id: RevealAnimation;
+  name: string;
+  description: string;
+}> = [
+  {
+    id: "ticker",
+    name: "Roleta",
+    description: "Contagem e nomes girando até o resultado.",
+  },
+  {
+    id: "sealed_card",
+    name: "Envelope lacrado",
+    description: "Um card auditado vira para revelar o perfil.",
+  },
+  {
+    id: "slot_machine",
+    name: "Slot machine",
+    description: "Rolos verticais desaceleram antes da revelação.",
+  },
+];
 
 function formatHandle(username: string) {
   const clean = username.trim().replace(/^@/, "");
@@ -53,6 +76,10 @@ function ParticipantAvatar({ participant, className }: { participant: DrawReveal
   const [failed, setFailed] = React.useState(false);
   const src = participant.profileImageUrl && !failed ? participant.profileImageUrl : null;
   const fallback = participant.username.trim().replace(/^@/, "").slice(0, 1).toUpperCase();
+
+  React.useEffect(() => {
+    setFailed(false);
+  }, [participant.profileImageUrl, participant.username]);
 
   return (
     <div className={cn("flex shrink-0 items-center justify-center overflow-hidden rounded-full border bg-muted text-muted-foreground", className)}>
@@ -106,6 +133,18 @@ function makeTickerRow(pool: string[], center: string, offset: number) {
   return row;
 }
 
+function makeSlotColumns(pool: string[], center: string, offset: number) {
+  const safePool = pool.length > 0 ? pool : [center];
+  const left = safePool[(offset * 3 + 1) % safePool.length] ?? center;
+  const right = safePool[(offset * 5 + 2) % safePool.length] ?? center;
+
+  return [
+    makeTickerRow(safePool, left, offset + 1),
+    makeTickerRow(safePool, center, offset + 7),
+    makeTickerRow(safePool, right, offset + 13),
+  ];
+}
+
 function useReducedMotion() {
   const [reducedMotion, setReducedMotion] = React.useState(false);
 
@@ -121,17 +160,25 @@ function useReducedMotion() {
   return reducedMotion;
 }
 
+function countdownDescription(animation: RevealAnimation) {
+  if (animation === "sealed_card") return "Preparando envelope de resultado...";
+  if (animation === "slot_machine") return "Preparando rolos de participantes...";
+  return "Preparando roleta de participantes...";
+}
+
 export function DrawRevealDialog({ giveawayId, participants, validCount, disabled }: DrawRevealDialogProps) {
   const router = useRouter();
   const { toast } = useToast();
   const reducedMotion = useReducedMotion();
   const [open, setOpen] = React.useState(false);
   const [stage, setStage] = React.useState<RevealStage>("confirming");
+  const [selectedAnimation, setSelectedAnimation] = React.useState<RevealAnimation>("ticker");
   const [countdown, setCountdown] = React.useState(3);
   const [drawResult, setDrawResult] = React.useState<DrawApiResponse | null>(null);
   const [revealItems, setRevealItems] = React.useState<RevealItem[]>([]);
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const [tickerNames, setTickerNames] = React.useState<string[]>(makeTickerRow(["@participante"], "@participante", 0));
+  const [slotColumns, setSlotColumns] = React.useState<string[][]>(makeSlotColumns(["@participante"], "@participante", 0));
 
   const currentItem = revealItems[currentIndex] ?? null;
   const tickerPool = React.useMemo(() => buildTickerPool(participants, revealItems), [participants, revealItems]);
@@ -150,6 +197,7 @@ export function DrawRevealDialog({ giveawayId, participants, validCount, disable
       const target = formatHandle(item.username);
       setCurrentIndex(index);
       setTickerNames(makeTickerRow(pool, target, index));
+      setSlotColumns(makeSlotColumns(pool, target, index));
 
       if (reducedMotion) {
         setStage("revealed");
@@ -207,22 +255,30 @@ export function DrawRevealDialog({ giveawayId, participants, validCount, disable
     if (stage !== "rolling" || !currentItem) return;
 
     const target = formatHandle(currentItem.username);
-    const maxTicks = 30;
+
+    if (selectedAnimation === "sealed_card") {
+      const timeout = window.setTimeout(() => setStage("revealed"), 1350);
+      return () => window.clearTimeout(timeout);
+    }
+
+    const maxTicks = selectedAnimation === "slot_machine" ? 38 : 30;
     let tick = 0;
     let timeout: number | undefined;
 
     const runTick = () => {
       if (tick >= maxTicks) {
         setTickerNames(makeTickerRow(tickerPool, target, maxTicks));
+        setSlotColumns(makeSlotColumns(tickerPool, target, maxTicks));
         setStage("revealed");
         return;
       }
 
       const center = tickerPool[(tick * 5 + currentIndex) % tickerPool.length] ?? target;
       setTickerNames(makeTickerRow(tickerPool, center, tick));
+      setSlotColumns(makeSlotColumns(tickerPool, center, tick));
 
       const progress = tick / maxTicks;
-      const delay = 42 + Math.round(progress * progress * 190);
+      const delay = selectedAnimation === "slot_machine" ? 36 + Math.round(progress * progress * 210) : 42 + Math.round(progress * progress * 190);
       tick += 1;
       timeout = window.setTimeout(runTick, delay);
     };
@@ -231,7 +287,7 @@ export function DrawRevealDialog({ giveawayId, participants, validCount, disable
     return () => {
       if (timeout) window.clearTimeout(timeout);
     };
-  }, [currentIndex, currentItem, stage, tickerPool]);
+  }, [currentIndex, currentItem, selectedAnimation, stage, tickerPool]);
 
   function onOpenChange(nextOpen: boolean) {
     if (!nextOpen && isLocked) return;
@@ -279,6 +335,28 @@ export function DrawRevealDialog({ giveawayId, participants, validCount, disable
                   {validCount} participantes válidos serão considerados conforme as regras já aplicadas.
                 </p>
               </div>
+
+              <div>
+                <div className="text-sm font-medium">Animação da revelação</div>
+                <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                  {revealAnimations.map((animation) => (
+                    <button
+                      key={animation.id}
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => setSelectedAnimation(animation.id)}
+                      className={cn(
+                        "rounded-md border p-3 text-left transition hover:border-primary/60 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60",
+                        selectedAnimation === animation.id && "border-primary bg-primary/10 shadow-soft",
+                      )}
+                    >
+                      <span className="block text-sm font-semibold">{animation.name}</span>
+                      <span className="mt-1 block text-xs leading-5 text-muted-foreground">{animation.description}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <DialogFooter>
                 <Button onClick={runDraw} disabled={disabled}>
                   <Dices className="size-4" />
@@ -304,11 +382,11 @@ export function DrawRevealDialog({ giveawayId, participants, validCount, disable
               <div className="mt-4 flex size-32 items-center justify-center rounded-full border bg-white text-7xl font-semibold shadow-soft animate-draw-glow motion-reduce:animate-none">
                 {countdown}
               </div>
-              <p className="mt-5 text-sm text-muted-foreground">Preparando roleta de participantes...</p>
+              <p className="mt-5 text-sm text-muted-foreground">{countdownDescription(selectedAnimation)}</p>
             </div>
           ) : null}
 
-          {stage === "rolling" ? (
+          {stage === "rolling" && selectedAnimation === "ticker" ? (
             <div className="flex min-h-72 flex-col justify-center">
               <div className="mb-5 text-center">
                 <div className="text-sm font-semibold uppercase text-primary">{currentItem ? revealLabel(currentItem) : "Sorteio"}</div>
@@ -331,6 +409,53 @@ export function DrawRevealDialog({ giveawayId, participants, validCount, disable
                 </div>
               </div>
               <p className="mt-4 text-center text-sm text-muted-foreground">A roleta vai desacelerar no resultado registrado.</p>
+            </div>
+          ) : null}
+
+          {stage === "rolling" && selectedAnimation === "sealed_card" ? (
+            <div className="flex min-h-72 flex-col items-center justify-center text-center">
+              <div className="text-sm font-semibold uppercase text-primary">{currentItem ? revealLabel(currentItem) : "Sorteio"}</div>
+              <div className="mt-5 h-44 w-36" style={{ perspective: "1000px" }}>
+                <div className="flex size-full flex-col items-center justify-center rounded-md border bg-white p-4 shadow-soft animate-draw-card-flip motion-reduce:animate-none">
+                  <ShieldCheck className="size-9 text-primary" />
+                  <div className="mt-3 text-xs font-semibold uppercase text-muted-foreground">Resultado auditado</div>
+                  <div className="mt-4 h-px w-full bg-border" />
+                  <Sparkles className="mt-4 size-5 text-primary" />
+                </div>
+              </div>
+              <p className="mt-5 text-sm text-muted-foreground">Abrindo envelope lacrado...</p>
+            </div>
+          ) : null}
+
+          {stage === "rolling" && selectedAnimation === "slot_machine" ? (
+            <div className="flex min-h-72 flex-col justify-center">
+              <div className="mb-5 text-center">
+                <div className="text-sm font-semibold uppercase text-primary">{currentItem ? revealLabel(currentItem) : "Sorteio"}</div>
+                <h3 className="mt-2 text-xl font-semibold">Rolos em movimento</h3>
+              </div>
+              <div className="relative overflow-hidden rounded-md border bg-white p-4">
+                <div className="pointer-events-none absolute inset-x-4 top-1/2 z-10 h-10 -translate-y-1/2 rounded-md border border-primary/40 bg-primary/5" />
+                <div className="grid grid-cols-3 gap-3">
+                  {slotColumns.map((column, columnIndex) => (
+                    <div key={columnIndex} className="h-44 overflow-hidden rounded-md border bg-muted/30 p-2">
+                      <div className="space-y-2 animate-draw-slot motion-reduce:animate-none">
+                        {column.map((name, rowIndex) => (
+                          <div
+                            key={`${columnIndex}-${name}-${rowIndex}`}
+                            className={cn(
+                              "h-8 rounded-sm border bg-white px-2 py-1 text-center text-xs font-medium text-muted-foreground transition-all",
+                              rowIndex === 3 && "border-primary bg-primary text-primary-foreground shadow-soft",
+                            )}
+                          >
+                            {name}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <p className="mt-4 text-center text-sm text-muted-foreground">Os rolos param no resultado registrado.</p>
             </div>
           ) : null}
 

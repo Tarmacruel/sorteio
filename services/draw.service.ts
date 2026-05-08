@@ -37,17 +37,20 @@ function getProfileImageUrl(rawData: unknown) {
   return /^https?:\/\//.test(value) ? value : null;
 }
 
-function serializeDrawParticipant(comment: {
-  id: string;
-  username: string;
-  text: string;
-  rawData: Prisma.JsonValue | null;
-}) {
+function serializeDrawParticipant(
+  comment: {
+    id: string;
+    username: string;
+    text: string;
+    rawData: Prisma.JsonValue | null;
+  },
+  profileImagesByUsername: Map<string, string>,
+) {
   return {
     id: comment.id,
     username: comment.username,
     text: comment.text,
-    profileImageUrl: getProfileImageUrl(comment.rawData),
+    profileImageUrl: getProfileImageUrl(comment.rawData) ?? profileImagesByUsername.get(normalizeUsername(comment.username)) ?? null,
   };
 }
 
@@ -91,6 +94,23 @@ export async function drawGiveaway(giveawayId: string) {
 
   const winners = shuffled.slice(0, giveaway.winnersCount);
   const alternates = shuffled.slice(giveaway.winnersCount, giveaway.winnersCount + giveaway.alternatesCount);
+  const profileImageRows = await prisma.comment.findMany({
+    where: { giveawayId },
+    select: {
+      username: true,
+      rawData: true,
+    },
+  });
+  const profileImagesByUsername = new Map<string, string>();
+
+  for (const row of profileImageRows) {
+    const key = normalizeUsername(row.username);
+    const profileImageUrl = getProfileImageUrl(row.rawData);
+
+    if (profileImageUrl && !profileImagesByUsername.has(key)) {
+      profileImagesByUsername.set(key, profileImageUrl);
+    }
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.drawResult.createMany({
@@ -137,7 +157,7 @@ export async function drawGiveaway(giveawayId: string) {
   return {
     seed,
     participantsHash,
-    winners: winners.map(serializeDrawParticipant),
-    alternates: alternates.map(serializeDrawParticipant),
+    winners: winners.map((winner) => serializeDrawParticipant(winner, profileImagesByUsername)),
+    alternates: alternates.map((alternate) => serializeDrawParticipant(alternate, profileImagesByUsername)),
   };
 }

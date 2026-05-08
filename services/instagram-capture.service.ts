@@ -87,6 +87,45 @@ function getCommentDedupeKey(comment: ExtractedComment) {
   return stableId ? `${username}|${text}|${stableId}` : `${username}|${text}`;
 }
 
+function jsonObjectFromUnknown(value: unknown) {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
+function getProfileImageUrlFromRawData(rawData: unknown) {
+  const value = jsonObjectFromUnknown(rawData).profileImageUrl;
+  return typeof value === "string" && /^https?:\/\//.test(value) ? value : null;
+}
+
+function buildCapturedCommentRecord(
+  giveawayId: string,
+  comment: ExtractedComment,
+  existingRawData?: Prisma.JsonValue | null,
+) {
+  const instagramCommentId = comment.instagramCommentId ?? createCommentSignature(comment);
+  const profileImageUrl =
+    comment.profileImageUrl ??
+    getProfileImageUrlFromRawData(comment.rawData) ??
+    getProfileImageUrlFromRawData(existingRawData);
+
+  const rawData = {
+    ...jsonObjectFromUnknown(existingRawData),
+    ...jsonObjectFromUnknown(comment.rawData),
+    permalink: comment.permalink ?? null,
+    dedupeKey: getCommentDedupeKey(comment),
+    profileImageUrl,
+  } as Prisma.InputJsonObject;
+
+  return {
+    giveawayId,
+    username: comment.username,
+    text: comment.text,
+    instagramCommentId,
+    commentedAt: parseCommentedAt(comment.commentedAt),
+    rawData,
+    profileImageUrl,
+  };
+}
+
 async function appendCaptureLog(captureJobId: string, message: string, details?: Prisma.InputJsonObject) {
   const job = await prisma.instagramCaptureJob.findUnique({
     where: { id: captureJobId },
@@ -557,35 +596,89 @@ async function extractVisibleComments(page: Page): Promise<ExtractedComment[]> {
       const match = href ? href.match(/\/c\/([0-9]+)\/?/) : null;
       return match ? match[1] : null;
     };
-    const imageSource = (image) => image.currentSrc || image.src || image.getAttribute("src") || null;
+    const firstSrcSetUrl = (srcset) => {
+      if (!srcset) return null;
+      const match = srcset.match(/https?:\/\/[^\s,]+/);
+      return match ? match[0] : null;
+    };
 
-    const findProfileImageUrl = (container, usernameAnchor) => {
-      const username = normalizeSearch(usernameAnchor ? usernameAnchor.textContent || "" : "");
-      const candidates = [];
+    const imageSource = (image) =>
+      image.currentSrc ||
+      image.src ||
+      image.getAttribute("src") ||
+      firstSrcSetUrl(image.getAttribute("srcset")) ||
+      null;
+
+    const uniqueElements = (elements) => Array.from(new Set(elements.filter(Boolean)));
+
+    const collectAvatarScopes = (container, usernameAnchor) => {
+      const scopes = [];
+      if (container) scopes.push(container);
+
       let current = usernameAnchor ? usernameAnchor.parentElement : container;
+      for (let depth = 0; current && depth < 10; depth += 1) {
+        scopes.push(current);
+        if (current.parentElement) scopes.push(current.parentElement);
 
-      for (let depth = 0; current && depth < 6; depth += 1) {
         const rect = current.getBoundingClientRect();
-        if (rect.width > 900 || rect.height > 500) break;
-
-        for (const image of Array.from(current.querySelectorAll("img[src]"))) {
-          const src = imageSource(image);
-          const imageRect = image.getBoundingClientRect();
-          const alt = normalizeSearch(image.getAttribute("alt") || "");
-          const isSmallAvatar = imageRect.width >= 18 && imageRect.width <= 96 && imageRect.height >= 18 && imageRect.height <= 96;
-          const looksLikeProfile = !alt || alt.includes("perfil") || alt.includes("profile") || alt.includes(username);
-
-          if (src && /^https?:\/\//.test(src) && isSmallAvatar && looksLikeProfile) {
-            candidates.push({ src, area: imageRect.width * imageRect.height, depth });
-          }
-        }
-
-        if (candidates.length > 0) break;
-        if (current === container) break;
+        if (current.matches("article") || rect.width > 1200 || rect.height > 900) break;
         current = current.parentElement;
       }
 
-      return candidates.sort((a, b) => a.depth - b.depth || b.area - a.area)[0]?.src || null;
+      if (usernameAnchor) {
+        scopes.push(usernameAnchor.closest("li"));
+        scopes.push(usernameAnchor.closest("ul"));
+        scopes.push(usernameAnchor.closest("article"));
+      }
+
+      return uniqueElements(scopes);
+    };
+
+    const findProfileImageUrl = (container, usernameAnchor) => {
+      const username = normalizeSearch(usernameAnchor ? usernameAnchor.textContent || "" : "");
+      const usernameRect = usernameAnchor ? usernameAnchor.getBoundingClientRect() : null;
+      const candidates = [];
+
+      for (const [depth, scope] of collectAvatarScopes(container, usernameAnchor).entries()) {
+        for (const image of Array.from(scope.querySelectorAll("img[src], img[srcset]"))) {
+          const src = imageSource(image);
+          if (!src || !/^https?:\/\//.test(src)) continue;
+
+          const imageRect = image.getBoundingClientRect();
+          if (imageRect.width <= 0 || imageRect.height <= 0) continue;
+
+          const ratio = imageRect.width / imageRect.height;
+          const isAvatarSized =
+            imageRect.width >= 16 &&
+            imageRect.width <= 128 &&
+            imageRect.height >= 16 &&
+            imageRect.height <= 128 &&
+            ratio >= 0.55 &&
+            ratio <= 1.8;
+
+          if (!isAvatarSized) continue;
+
+          const alt = normalizeSearch(image.getAttribute("alt") || "");
+          const profileHint = !alt || alt.includes("perfil") || alt.includes("profile") || alt.includes(username);
+          const verticalDistance = usernameRect
+            ? Math.abs((imageRect.top + imageRect.bottom) / 2 - (usernameRect.top + usernameRect.bottom) / 2)
+            : 0;
+          const horizontalDistance = usernameRect
+            ? Math.abs(imageRect.right - usernameRect.left)
+            : 0;
+          const isNearUsername = !usernameRect || verticalDistance <= 90;
+
+          if (!isNearUsername && !profileHint) continue;
+
+          candidates.push({
+            src,
+            score: verticalDistance + horizontalDistance * 0.18 + depth * 16 - (profileHint ? 32 : 0),
+            area: imageRect.width * imageRect.height,
+          });
+        }
+      }
+
+      return candidates.sort((a, b) => a.score - b.score || b.area - a.area)[0]?.src || null;
     };
 
     const isUiText = (value) => {
@@ -782,6 +875,71 @@ function parseCommentedAt(value?: string | null) {
   if (!value) return null;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
+}
+
+async function saveCapturedComments(giveawayId: string, comments: ExtractedComment[]) {
+  const ids = comments.map((comment) => comment.instagramCommentId ?? createCommentSignature(comment));
+  const existingComments = await prisma.comment.findMany({
+    where: {
+      giveawayId,
+      instagramCommentId: { in: ids },
+    },
+    select: {
+      id: true,
+      instagramCommentId: true,
+      rawData: true,
+    },
+  });
+
+  const existingByInstagramId = new Map(
+    existingComments
+      .filter((comment) => comment.instagramCommentId)
+      .map((comment) => [comment.instagramCommentId as string, comment]),
+  );
+
+  const records = comments.map((comment) => {
+    const instagramCommentId = comment.instagramCommentId ?? createCommentSignature(comment);
+    const existing = existingByInstagramId.get(instagramCommentId);
+    return {
+      existing,
+      data: buildCapturedCommentRecord(giveawayId, comment, existing?.rawData),
+    };
+  });
+
+  const chunkSize = 200;
+  for (let index = 0; index < records.length; index += chunkSize) {
+    const chunk = records.slice(index, index + chunkSize);
+    await prisma.$transaction(
+      chunk.map(({ existing, data }) => {
+        if (existing) {
+          return prisma.comment.update({
+            where: { id: existing.id },
+            data: {
+              username: data.username,
+              text: data.text,
+              commentedAt: data.commentedAt,
+              rawData: data.rawData,
+            },
+          });
+        }
+
+        return prisma.comment.create({
+          data: {
+            giveawayId: data.giveawayId,
+            username: data.username,
+            text: data.text,
+            instagramCommentId: data.instagramCommentId,
+            commentedAt: data.commentedAt,
+            rawData: data.rawData,
+          },
+        });
+      }),
+    );
+  }
+
+  return {
+    profileImagesFound: records.filter(({ data }) => Boolean(data.profileImageUrl)).length,
+  };
 }
 
 function isKnownCaptureFailure(error: unknown) {
@@ -1060,21 +1218,11 @@ export async function captureInstagramComments(input: {
       total: uniqueComments.length,
     });
 
-    await prisma.comment.createMany({
-      data: uniqueComments.map((comment) => ({
-        giveawayId: input.giveawayId,
-        username: comment.username,
-        text: comment.text,
-        instagramCommentId: comment.instagramCommentId ?? createCommentSignature(comment),
-        commentedAt: parseCommentedAt(comment.commentedAt),
-        rawData: {
-          ...(comment.rawData ?? {}),
-          permalink: comment.permalink ?? null,
-          dedupeKey: getCommentDedupeKey(comment),
-          profileImageUrl: comment.profileImageUrl ?? comment.rawData?.profileImageUrl ?? null,
-        },
-      })),
-      skipDuplicates: true,
+    const saveResult = await saveCapturedComments(input.giveawayId, uniqueComments);
+
+    await appendCaptureLog(input.captureJobId, `Imagens de perfil capturadas: ${saveResult.profileImagesFound}.`, {
+      profileImagesFound: saveResult.profileImagesFound,
+      totalUniqueComments: uniqueComments.length,
     });
 
     const commentsSaved = await prisma.comment.count({

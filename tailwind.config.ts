@@ -82,6 +82,15 @@ const config: Config = {
           "0%, 100%": { transform: "translateX(-8px)" },
           "50%": { transform: "translateX(8px)" },
         },
+        "draw-card-flip": {
+          "0%": { opacity: "0", transform: "rotateY(-18deg) scale(0.94)" },
+          "55%": { opacity: "1", transform: "rotateY(8deg) scale(1.02)" },
+          "100%": { opacity: "1", transform: "rotateY(0deg) scale(1)" },
+        },
+        "draw-slot": {
+          "0%, 100%": { transform: "translateY(-4px)" },
+          "50%": { transform: "translateY(4px)" },
+        },
       },
       animation: {
         "fade-up": "fade-up 700ms cubic-bezier(.22,1,.36,1) both",
@@ -89,6 +98,8 @@ const config: Config = {
         "draw-pop": "draw-pop 520ms cubic-bezier(.22,1,.36,1) both",
         "draw-glow": "draw-glow 1.5s ease-out infinite",
         "draw-ticker": "draw-ticker 520ms ease-in-out infinite",
+        "draw-card-flip": "draw-card-flip 1.15s cubic-bezier(.22,1,.36,1) both",
+        "draw-slot": "draw-slot 360ms ease-in-out infinite",
       },
     },
   },
