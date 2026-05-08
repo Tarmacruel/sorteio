@@ -20,6 +20,7 @@ type CommentRow = {
   commentedAt?: string | null;
   isValid: boolean;
   invalidReason?: string | null;
+  rawData?: unknown;
 };
 
 type CommentResponse = {
@@ -62,6 +63,13 @@ function CommentTable({ comments, empty }: { comments: CommentRow[]; empty: stri
       </TableBody>
     </Table>
   );
+}
+
+function getProfileImageUrl(rawData: unknown) {
+  if (!rawData || typeof rawData !== "object" || Array.isArray(rawData)) return null;
+
+  const value = (rawData as Record<string, unknown>).profileImageUrl;
+  return typeof value === "string" && /^https?:\/\//.test(value) ? value : null;
 }
 
 export function ReviewComments({ giveawayId }: { giveawayId: string }) {
@@ -145,7 +153,12 @@ export function ReviewComments({ giveawayId }: { giveawayId: string }) {
         </Button>
         <DrawRevealDialog
           giveawayId={giveawayId}
-          participants={validData?.comments ?? []}
+          participants={(validData?.comments ?? []).map((comment) => ({
+            id: comment.id,
+            username: comment.username,
+            text: comment.text,
+            profileImageUrl: getProfileImageUrl(comment.rawData),
+          }))}
           validCount={stats.valid}
           disabled={isMutating || stats.valid === 0}
         />

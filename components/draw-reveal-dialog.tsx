@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CheckCircle2, Dices, Loader2, ShieldCheck, Sparkles, Trophy } from "lucide-react";
+import { ArrowRight, CheckCircle2, Dices, Loader2, ShieldCheck, Sparkles, Trophy, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,6 +20,7 @@ export type DrawRevealParticipant = {
   id: string;
   username: string;
   text?: string | null;
+  profileImageUrl?: string | null;
 };
 
 type DrawApiResponse = {
@@ -46,6 +47,30 @@ type DrawRevealDialogProps = {
 function formatHandle(username: string) {
   const clean = username.trim().replace(/^@/, "");
   return `@${clean}`;
+}
+
+function ParticipantAvatar({ participant, className }: { participant: DrawRevealParticipant; className?: string }) {
+  const [failed, setFailed] = React.useState(false);
+  const src = participant.profileImageUrl && !failed ? participant.profileImageUrl : null;
+  const fallback = participant.username.trim().replace(/^@/, "").slice(0, 1).toUpperCase();
+
+  return (
+    <div className={cn("flex shrink-0 items-center justify-center overflow-hidden rounded-full border bg-muted text-muted-foreground", className)}>
+      {src ? (
+        <img
+          src={src}
+          alt={`Foto de perfil de ${formatHandle(participant.username)}`}
+          className="size-full object-cover"
+          referrerPolicy="no-referrer"
+          onError={() => setFailed(true)}
+        />
+      ) : fallback ? (
+        <span className="font-semibold">{fallback}</span>
+      ) : (
+        <UserRound className="size-1/2" />
+      )}
+    </div>
+  );
 }
 
 function revealLabel(item: RevealItem) {
@@ -312,8 +337,11 @@ export function DrawRevealDialog({ giveawayId, participants, validCount, disable
           {stage === "revealed" && currentItem ? (
             <div className="space-y-5">
               <div className="rounded-md border bg-white p-5 text-center shadow-soft animate-draw-pop motion-reduce:animate-none">
-                <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                  {currentItem.revealType === "winner" ? <Trophy className="size-6" /> : <Sparkles className="size-6" />}
+                <div className="relative mx-auto w-fit">
+                  <ParticipantAvatar participant={currentItem} className="size-24 text-3xl shadow-soft" />
+                  <div className="absolute -bottom-1 -right-1 flex size-9 items-center justify-center rounded-full border-4 border-white bg-primary text-primary-foreground">
+                    {currentItem.revealType === "winner" ? <Trophy className="size-4" /> : <Sparkles className="size-4" />}
+                  </div>
                 </div>
                 <div className="mt-4 text-sm font-semibold uppercase text-primary">{revealLabel(currentItem)}</div>
                 <div className="mt-2 break-all text-4xl font-semibold">{formatHandle(currentItem.username)}</div>
@@ -364,9 +392,12 @@ export function DrawRevealDialog({ giveawayId, participants, validCount, disable
               <div className="max-h-72 space-y-2 overflow-auto pr-1">
                 {revealItems.map((item) => (
                   <div key={`${item.revealType}-${item.id}-${item.revealPosition}`} className="flex items-center justify-between gap-3 rounded-md border p-3">
-                    <div>
-                      <div className="text-xs font-semibold uppercase text-primary">{revealLabel(item)}</div>
-                      <div className="font-medium">{formatHandle(item.username)}</div>
+                    <div className="flex min-w-0 items-center gap-3">
+                      <ParticipantAvatar participant={item} className="size-10 text-sm" />
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold uppercase text-primary">{revealLabel(item)}</div>
+                        <div className="truncate font-medium">{formatHandle(item.username)}</div>
+                      </div>
                     </div>
                     {item.revealType === "winner" ? <Trophy className="size-4 text-primary" /> : <Sparkles className="size-4 text-muted-foreground" />}
                   </div>

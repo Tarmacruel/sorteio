@@ -19,6 +19,7 @@ type ExtractedComment = {
   instagramCommentId?: string | null;
   permalink?: string | null;
   commentedAt?: string | null;
+  profileImageUrl?: string | null;
   rawData?: Prisma.InputJsonObject;
 };
 
@@ -556,6 +557,36 @@ async function extractVisibleComments(page: Page): Promise<ExtractedComment[]> {
       const match = href ? href.match(/\/c\/([0-9]+)\/?/) : null;
       return match ? match[1] : null;
     };
+    const imageSource = (image) => image.currentSrc || image.src || image.getAttribute("src") || null;
+
+    const findProfileImageUrl = (container, usernameAnchor) => {
+      const username = normalizeSearch(usernameAnchor ? usernameAnchor.textContent || "" : "");
+      const candidates = [];
+      let current = usernameAnchor ? usernameAnchor.parentElement : container;
+
+      for (let depth = 0; current && depth < 6; depth += 1) {
+        const rect = current.getBoundingClientRect();
+        if (rect.width > 900 || rect.height > 500) break;
+
+        for (const image of Array.from(current.querySelectorAll("img[src]"))) {
+          const src = imageSource(image);
+          const imageRect = image.getBoundingClientRect();
+          const alt = normalizeSearch(image.getAttribute("alt") || "");
+          const isSmallAvatar = imageRect.width >= 18 && imageRect.width <= 96 && imageRect.height >= 18 && imageRect.height <= 96;
+          const looksLikeProfile = !alt || alt.includes("perfil") || alt.includes("profile") || alt.includes(username);
+
+          if (src && /^https?:\/\//.test(src) && isSmallAvatar && looksLikeProfile) {
+            candidates.push({ src, area: imageRect.width * imageRect.height, depth });
+          }
+        }
+
+        if (candidates.length > 0) break;
+        if (current === container) break;
+        current = current.parentElement;
+      }
+
+      return candidates.sort((a, b) => a.depth - b.depth || b.area - a.area)[0]?.src || null;
+    };
 
     const isUiText = (value) => {
       const text = normalizeSearch(value);
@@ -669,6 +700,7 @@ async function extractVisibleComments(page: Page): Promise<ExtractedComment[]> {
 
       const text = normalizeText((piecesAfterTime.length > 0 ? piecesAfterTime : piecesBetweenUserAndTime).join(" "));
       if (!text) return;
+      const profileImageUrl = findProfileImageUrl(selected, usernameAnchor);
 
       pushComment({
         username,
@@ -676,9 +708,11 @@ async function extractVisibleComments(page: Page): Promise<ExtractedComment[]> {
         instagramCommentId: commentId,
         permalink: href,
         commentedAt: timeNode ? timeNode.getAttribute("datetime") : null,
+        profileImageUrl,
         rawData: {
           source: "comment permalink anchor",
           href,
+          profileImageUrl,
         },
       });
     };
@@ -710,14 +744,17 @@ async function extractVisibleComments(page: Page): Promise<ExtractedComment[]> {
 
       const text = normalizeText(Array.from(new Set(spanTexts)).join(" "));
       if (!text) continue;
+      const profileImageUrl = findProfileImageUrl(node, usernameAnchor);
 
       pushComment({
         username,
         text,
         commentedAt: timeNode.getAttribute("datetime"),
+        profileImageUrl,
         rawData: {
           source: "article ul li fallback",
           href: usernameAnchor ? usernameAnchor.getAttribute("href") : null,
+          profileImageUrl,
         },
       });
     }
@@ -1034,6 +1071,7 @@ export async function captureInstagramComments(input: {
           ...(comment.rawData ?? {}),
           permalink: comment.permalink ?? null,
           dedupeKey: getCommentDedupeKey(comment),
+          profileImageUrl: comment.profileImageUrl ?? comment.rawData?.profileImageUrl ?? null,
         },
       })),
       skipDuplicates: true,

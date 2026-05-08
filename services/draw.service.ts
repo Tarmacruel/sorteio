@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { normalizeUsername } from "@/lib/utils";
 import { registerAuditLog } from "@/services/audit.service";
@@ -25,6 +26,29 @@ function buildParticipantsHash(
     .sort((a, b) => a.id.localeCompare(b.id));
 
   return hash(JSON.stringify(canonical));
+}
+
+function getProfileImageUrl(rawData: unknown) {
+  if (!rawData || typeof rawData !== "object" || Array.isArray(rawData)) return null;
+
+  const value = (rawData as Record<string, unknown>).profileImageUrl;
+  if (typeof value !== "string") return null;
+
+  return /^https?:\/\//.test(value) ? value : null;
+}
+
+function serializeDrawParticipant(comment: {
+  id: string;
+  username: string;
+  text: string;
+  rawData: Prisma.JsonValue | null;
+}) {
+  return {
+    id: comment.id,
+    username: comment.username,
+    text: comment.text,
+    profileImageUrl: getProfileImageUrl(comment.rawData),
+  };
 }
 
 export async function drawGiveaway(giveawayId: string) {
@@ -113,7 +137,7 @@ export async function drawGiveaway(giveawayId: string) {
   return {
     seed,
     participantsHash,
-    winners,
-    alternates,
+    winners: winners.map(serializeDrawParticipant),
+    alternates: alternates.map(serializeDrawParticipant),
   };
 }
