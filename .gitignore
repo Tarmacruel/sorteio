@@ -9,3 +9,8 @@ playwright-report
 test-results
 *.log
 tsconfig.tsbuildinfo
+.runtime/
+logs/
+storage/
+*.auth.json
+instagram-auth.json
