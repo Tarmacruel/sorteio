@@ -475,22 +475,54 @@ async function clickLoadMoreComments(page: Page) {
 
 async function scrollCommentsContainer(page: Page, containerHandle: ElementHandle<HTMLElement> | null) {
   if (containerHandle) {
-    const didScroll = await containerHandle
-      .evaluate((element) => {
-        const before = element.scrollTop;
-        const distance = Math.max(500, Math.floor(element.clientHeight * 0.85));
-        element.scrollTop = Math.min(element.scrollHeight, element.scrollTop + distance);
-        return element.scrollTop !== before;
-      })
-      .catch(() => false);
+    await containerHandle.scrollIntoViewIfNeeded().catch(() => undefined);
 
-    const box = await containerHandle.boundingBox().catch(() => null);
-    if (box) {
-      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2).catch(() => undefined);
-      await page.mouse.wheel(0, 1200).catch(() => undefined);
+    let box = await containerHandle.boundingBox().catch(() => null);
+    if (!box || box.width <= 0 || box.height <= 0) {
+      box = await page
+        .evaluateHandle(() => {
+          const candidates = Array.from(document.querySelectorAll("main, article, aside, section, div, ul"))
+            .map((element) => {
+              const rect = element.getBoundingClientRect();
+              const links = element.querySelectorAll('a[href*="/c/"]').length;
+              const times = element.querySelectorAll("time").length;
+              const scrollable = element.scrollHeight > element.clientHeight + 30;
+              const visible = rect.width > 100 && rect.height > 100;
+              const score =
+                (scrollable ? 1000 : 0) +
+                links * 100 +
+                times * 20 +
+                Math.min(element.scrollHeight - element.clientHeight, 2500) / 10;
+
+              return { element, visible, score };
+            })
+            .filter((candidate) => candidate.visible)
+            .sort((a, b) => b.score - a.score);
+
+          const target = candidates[0]?.element ?? null;
+          target?.scrollIntoView({ block: "center", inline: "nearest" });
+          return target;
+        })
+        .then(async (handle) => {
+          const element = handle.asElement() as ElementHandle<HTMLElement> | null;
+          const fallbackBox = element ? await element.boundingBox().catch(() => null) : null;
+          await handle.dispose().catch(() => undefined);
+          return fallbackBox;
+        })
+        .catch(() => null);
     }
 
-    if (didScroll) return true;
+    if (box) {
+      const viewport = page.viewportSize() ?? { width: 1280, height: 900 };
+      const x = Math.min(Math.max(box.x + box.width * 0.55, 20), viewport.width - 20);
+      const y = Math.min(Math.max(box.y + box.height * 0.82, 20), viewport.height - 20);
+
+      await page.mouse.move(x, y).catch(() => undefined);
+      await page.mouse.wheel(0, 450).catch(() => undefined);
+      await page.waitForTimeout(350);
+      await page.mouse.wheel(0, 650).catch(() => undefined);
+      return true;
+    }
   }
 
   await page.mouse.wheel(0, 1400).catch(() => undefined);
