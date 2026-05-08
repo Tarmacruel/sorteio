@@ -4,24 +4,24 @@ import { Button } from "@/components/ui/button";
 
 const steps = [
   {
-    title: "Informe a publicacao",
-    description: "Cole a URL publica do post, Reel ou IGTV e defina vencedores, suplentes e prazo dos comentarios.",
+    title: "Informe a publicação",
+    description: "Cole a URL pública do post, Reel ou IGTV e defina vencedores, suplentes e prazo dos comentários.",
   },
   {
     title: "Aplique as regras",
-    description: "Configure palavra obrigatoria, hashtag, marcacoes, bloqueios, duplicidades e usuarios permitidos.",
+    description: "Configure palavra obrigatória, hashtag, marcações, bloqueios, duplicidades e usuários permitidos.",
   },
   {
     title: "Publique o resultado",
-    description: "Capture, valide, sorteie e compartilhe uma pagina publica com seed, hash e trilha de auditoria.",
+    description: "Capture, valide, sorteie e compartilhe uma página pública com seed, hash e trilha de auditoria.",
   },
 ];
 
 const features = [
-  "Captura automatica com Playwright",
-  "Validacao por regras configuraveis",
-  "Sorteio deterministico com seed criptografica",
-  "Resultado publico exportavel",
+  "Captura automática com Playwright",
+  "Validação por regras configuráveis",
+  "Sorteio determinístico com seed criptográfica",
+  "Resultado público exportável",
 ];
 
 export default function LandingPage() {
@@ -34,13 +34,13 @@ export default function LandingPage() {
           <div className="max-w-2xl animate-fade-up">
             <div className="mb-5 inline-flex items-center gap-2 rounded-md border border-white/[0.15] bg-white/[0.08] px-3 py-1 text-sm text-white/[0.82]">
               <ShieldCheck className="size-4" />
-              Sorteios de comentarios com captura automatica e auditoria
+              Sorteios de comentários com captura automática e auditoria
             </div>
             <h1 className="text-balance text-5xl font-semibold leading-[0.98] tracking-normal sm:text-6xl lg:text-7xl">
-              Sorteio Auditavel
+              Sorteio Auditável
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-8 text-white/76">
-              Uma plataforma SaaS para coletar comentarios publicos do Instagram, validar regras do sorteio e publicar resultados verificaveis.
+              Uma plataforma SaaS para coletar comentários públicos do Instagram, validar regras do sorteio e publicar resultados verificáveis.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg" className="bg-white text-slate-950 hover:bg-white/90">
@@ -68,7 +68,7 @@ export default function LandingPage() {
               <div className="relative h-24 border-b border-white/10 bg-white/[0.03]">
                 <div className="absolute inset-x-0 top-0 h-20 animate-scan-line bg-gradient-to-b from-transparent via-teal-300/22 to-transparent" />
                 <div className="grid h-full grid-cols-4 divide-x divide-white/10">
-                  {["URL", "Comentarios", "Regras", "Auditoria"].map((item) => (
+                  {["URL", "Comentários", "Regras", "Auditoria"].map((item) => (
                     <div key={item} className="flex items-center justify-center text-sm text-white/68">
                       {item}
                     </div>
@@ -77,8 +77,8 @@ export default function LandingPage() {
               </div>
               <div className="space-y-3 p-5">
                 {[
-                  ["Acessando publicacao...", "ok"],
-                  ["Carregando comentarios...", "ok"],
+                  ["Acessando publicação...", "ok"],
+                  ["Carregando comentários...", "ok"],
                   ["Removendo duplicidades...", "live"],
                   ["Gerando hash dos participantes...", "wait"],
                 ].map(([label, status]) => (
@@ -93,8 +93,8 @@ export default function LandingPage() {
               <div className="grid grid-cols-3 border-t border-white/10">
                 {[
                   ["1.842", "capturados"],
-                  ["1.109", "validos"],
-                  ["733", "excluidos"],
+                  ["1.109", "válidos"],
+                  ["733", "excluídos"],
                 ].map(([value, label]) => (
                   <div key={label} className="px-5 py-4">
                     <div className="text-2xl font-semibold">{value}</div>
@@ -110,7 +110,7 @@ export default function LandingPage() {
       <section className="container py-20">
         <div className="max-w-2xl">
           <p className="text-sm font-semibold uppercase text-primary">Fluxo em 3 passos</p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-normal">Da URL ao resultado publico sem planilhas.</h2>
+          <h2 className="mt-3 text-3xl font-semibold tracking-normal">Da URL ao resultado público sem planilhas.</h2>
         </div>
         <div className="mt-10 grid gap-8 md:grid-cols-3">
           {steps.map((step, index) => (
@@ -129,7 +129,7 @@ export default function LandingPage() {
         <div className="container grid gap-12 py-20 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
             <p className="text-sm font-semibold uppercase text-primary">Recursos principais</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-normal">Regras claras, sorteio reprodutivel e rastreio tecnico.</h2>
+            <h2 className="mt-3 text-3xl font-semibold tracking-normal">Regras claras, sorteio reprodutível e rastreio técnico.</h2>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {features.map((feature) => (
@@ -147,21 +147,21 @@ export default function LandingPage() {
           <FileCheck2 className="mb-5 size-10 text-primary" />
           <h2 className="text-3xl font-semibold tracking-normal">Regras personalizadas.</h2>
           <p className="mt-4 leading-7 text-muted-foreground">
-            Combine palavra obrigatoria, hashtag, marcacoes, prazo, usuarios bloqueados ou lista permitida.
+            Combine palavra obrigatória, hashtag, marcações, prazo, usuários bloqueados ou lista permitida.
           </p>
         </div>
         <div className="lg:col-span-1">
           <LockKeyhole className="mb-5 size-10 text-primary" />
-          <h2 className="text-3xl font-semibold tracking-normal">Transparencia publica.</h2>
+          <h2 className="text-3xl font-semibold tracking-normal">Transparência pública.</h2>
           <p className="mt-4 leading-7 text-muted-foreground">
             Cada resultado mostra seed, hash da lista de participantes, totais, regras aplicadas e logs de auditoria.
           </p>
         </div>
         <div className="lg:col-span-1">
           <Play className="mb-5 size-10 text-primary" />
-          <h2 className="text-3xl font-semibold tracking-normal">Captura automatica.</h2>
+          <h2 className="text-3xl font-semibold tracking-normal">Captura automática.</h2>
           <p className="mt-4 leading-7 text-muted-foreground">
-            O worker usa Playwright para carregar comentarios publicos e registra falhas quando a postagem exige login ou esta indisponivel.
+            O worker usa Playwright para carregar comentários públicos e registra falhas quando a postagem exige login ou está indisponível.
           </p>
         </div>
       </section>
@@ -171,7 +171,7 @@ export default function LandingPage() {
           <div>
             <h2 className="text-3xl font-semibold tracking-normal">Pronto para criar seu sorteio?</h2>
             <p className="mt-3 max-w-2xl text-white/70">
-              Configure as regras, inicie a captura automatica e entregue um resultado publico auditavel.
+              Configure as regras, inicie a captura automática e entregue um resultado público auditável.
             </p>
           </div>
           <Button asChild size="lg" className="bg-white text-slate-950 hover:bg-white/90">

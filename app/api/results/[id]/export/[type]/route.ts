@@ -34,7 +34,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   });
 
   if (!giveaway) {
-    return NextResponse.json({ error: "Resultado nao encontrado." }, { status: 404 });
+    return NextResponse.json({ error: "Resultado não encontrado." }, { status: 404 });
   }
 
   if (type === "resultado-json") {
@@ -99,5 +99,5 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     );
   }
 
-  return NextResponse.json({ error: "Exportacao nao suportada." }, { status: 404 });
+  return NextResponse.json({ error: "Exportação não suportada." }, { status: 404 });
 }

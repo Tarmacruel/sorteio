@@ -3,7 +3,7 @@ import IORedis from "ioredis";
 
 const redisUrl = process.env.REDIS_URL ?? "redis://localhost:6379";
 const queueUnavailableMessage =
-  "Nao foi possivel conectar ao Redis local. Inicie o Redis em localhost:6379 e execute o worker de captura.";
+  "Não foi possível conectar ao Redis local. Inicie o Redis em localhost:6379 e execute o worker de captura.";
 
 let connection: IORedis | null = null;
 let instagramCaptureQueue: Queue | null = null;

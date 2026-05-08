@@ -64,11 +64,11 @@ export async function drawGiveaway(giveawayId: string) {
   });
 
   if (!giveaway) {
-    throw new Error("Sorteio nao encontrado.");
+    throw new Error("Sorteio não encontrado.");
   }
 
   if (giveaway.drawResults.length > 0 || giveaway.status === "drawn") {
-    throw new Error("Este sorteio ja possui resultado registrado.");
+    throw new Error("Este sorteio já possui resultado registrado.");
   }
 
   const participants = giveaway.oneChancePerUser
@@ -78,7 +78,7 @@ export async function drawGiveaway(giveawayId: string) {
     : giveaway.comments;
 
   if (participants.length === 0) {
-    throw new Error("Nao ha participantes validos para sortear.");
+    throw new Error("Não há participantes válidos para sortear.");
   }
 
   const seed = crypto.randomBytes(32).toString("hex");

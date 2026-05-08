@@ -7,7 +7,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: `${appName} | Sorteios auditaveis no Instagram`,
-  description: "Plataforma SaaS para captura automatica, validacao e auditoria de sorteios de comentarios do Instagram.",
+  description: "Plataforma SaaS para captura automática, validação e auditoria de sorteios de comentários do Instagram.",
 };
 
 export default function RootLayout({

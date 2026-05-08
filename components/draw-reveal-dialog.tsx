@@ -169,8 +169,8 @@ export function DrawRevealDialog({ giveawayId, participants, validCount, disable
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      const description = typeof data.error === "string" ? data.error : "Nao foi possivel realizar o sorteio.";
-      toast({ title: "Sorteio nao realizado", description });
+      const description = typeof data.error === "string" ? data.error : "Não foi possível realizar o sorteio.";
+      toast({ title: "Sorteio não realizado", description });
       setStage("confirming");
       return;
     }
@@ -253,7 +253,7 @@ export function DrawRevealDialog({ giveawayId, participants, validCount, disable
       <DialogTrigger asChild>
         <Button disabled={disabled}>
           {drawResult ? <Trophy className="size-4" /> : <Dices className="size-4" />}
-          {drawResult ? "Ver revelacao" : "Realizar sorteio"}
+          {drawResult ? "Ver revelação" : "Realizar sorteio"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl overflow-hidden p-0 [&>button]:text-white [&>button]:ring-offset-slate-950 [&>button:hover]:text-white">
@@ -261,11 +261,11 @@ export function DrawRevealDialog({ giveawayId, participants, validCount, disable
           <DialogHeader>
             <div className="flex items-center gap-2 text-xs font-semibold uppercase text-emerald-200">
               <ShieldCheck className="size-4" />
-              Resultado auditavel
+              Resultado auditável
             </div>
-            <DialogTitle className="text-2xl text-white">Revelacao do sorteio</DialogTitle>
+            <DialogTitle className="text-2xl text-white">Revelação do sorteio</DialogTitle>
             <DialogDescription className="text-slate-300">
-              O sorteio e gravado no servidor antes da animacao. Seed e hash permanecem na pagina publica.
+              O sorteio é gravado no servidor antes da animação. Seed e hash permanecem na página pública.
             </DialogDescription>
           </DialogHeader>
         </div>
@@ -276,7 +276,7 @@ export function DrawRevealDialog({ giveawayId, participants, validCount, disable
               <div className="rounded-md border bg-muted/40 p-4">
                 <div className="text-sm font-medium">Tudo pronto para sortear</div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {validCount} participantes validos serao considerados conforme as regras ja aplicadas.
+                  {validCount} participantes válidos serão considerados conforme as regras já aplicadas.
                 </p>
               </div>
               <DialogFooter>
@@ -293,7 +293,7 @@ export function DrawRevealDialog({ giveawayId, participants, validCount, disable
               <Loader2 className="size-10 animate-spin text-primary" />
               <h3 className="mt-5 text-xl font-semibold">Realizando sorteio...</h3>
               <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                O resultado esta sendo registrado com seed criptografica antes da revelacao.
+                O resultado está sendo registrado com seed criptográfica antes da revelação.
               </p>
             </div>
           ) : null}
@@ -365,12 +365,12 @@ export function DrawRevealDialog({ giveawayId, participants, validCount, disable
                 {nextItemExists ? (
                   <Button onClick={() => startReveal(currentIndex + 1)}>
                     <Sparkles className="size-4" />
-                    Revelar proximo
+                    Revelar próximo
                   </Button>
                 ) : (
                   <Button onClick={() => setStage("finished")}>
                     <CheckCircle2 className="size-4" />
-                    Concluir revelacao
+                    Concluir revelação
                   </Button>
                 )}
               </DialogFooter>
@@ -385,7 +385,7 @@ export function DrawRevealDialog({ giveawayId, participants, validCount, disable
                   Sorteio revelado
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  O resultado publico ja esta disponivel com seed, hash e trilha de auditoria.
+                  O resultado público já está disponível com seed, hash e trilha de auditoria.
                 </p>
               </div>
 
@@ -406,7 +406,7 @@ export function DrawRevealDialog({ giveawayId, participants, validCount, disable
 
               <DialogFooter>
                 <Button onClick={goToResult}>
-                  Ver resultado publico
+                  Ver resultado público
                   <ArrowRight className="size-4" />
                 </Button>
               </DialogFooter>

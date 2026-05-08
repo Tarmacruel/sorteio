@@ -1,6 +1,6 @@
 import type { GiveawayStatus, RuleType } from "@/types/giveaway";
 
-export const appName = "Sorteio Auditavel";
+export const appName = "Sorteio Auditável";
 
 export const statusLabels: Record<GiveawayStatus, string> = {
   draft: "Rascunho",
@@ -25,24 +25,24 @@ export const statusTone: Record<GiveawayStatus, "default" | "secondary" | "destr
 };
 
 export const ruleLabels: Record<RuleType, string> = {
-  required_phrase: "Palavra ou frase obrigatoria",
-  required_hashtag: "Hashtag obrigatoria",
-  min_mentions: "Quantidade minima de marcacoes",
-  require_mention: "Exigir ao menos uma marcacao",
+  required_phrase: "Palavra ou frase obrigatória",
+  required_hashtag: "Hashtag obrigatória",
+  min_mentions: "Quantidade mínima de marcações",
+  require_mention: "Exigir ao menos uma marcação",
   forbidden_words: "Palavras proibidas",
-  blocked_users: "Usuarios excluidos",
-  allowed_users: "Usuarios permitidos",
+  blocked_users: "Usuários excluídos",
+  allowed_users: "Usuários permitidos",
   exclude_organizer: "Excluir perfil organizador",
-  ignore_duplicates: "Ignorar comentarios duplicados",
-  min_length: "Ignorar comentarios curtos",
+  ignore_duplicates: "Ignorar comentários duplicados",
+  min_length: "Ignorar comentários curtos",
 };
 
 export const captureMessages = {
-  opening: "Acessando publicacao...",
-  loading: "Carregando comentarios...",
-  loadingMore: "Buscando mais comentarios...",
+  opening: "Acessando publicação...",
+  loading: "Carregando comentários...",
+  loadingMore: "Buscando mais comentários...",
   dedupe: "Removendo duplicidades...",
-  saving: "Salvando comentarios...",
-  completed: "Captura concluida.",
-  unavailable: "Nao foi possivel capturar comentarios publicamente disponiveis desta postagem.",
+  saving: "Salvando comentários...",
+  completed: "Captura concluída.",
+  unavailable: "Não foi possível capturar comentários publicamente disponíveis desta postagem.",
 };

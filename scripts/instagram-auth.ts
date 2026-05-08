@@ -32,8 +32,8 @@ async function main() {
     waitUntil: "domcontentloaded",
   });
 
-  console.log("Faca login manualmente na janela aberta.");
-  console.log("Apos concluir o login e visualizar a pagina inicial do Instagram, aguarde...");
+  console.log("Faça login manualmente na janela aberta.");
+  console.log("Após concluir o login e visualizar a página inicial do Instagram, aguarde...");
 
   await page.waitForURL(/instagram\.com\/(?!accounts\/login)/, {
     timeout: 180_000,
@@ -41,12 +41,12 @@ async function main() {
 
   await context.storageState({ path: storagePath });
 
-  console.log(`Sessao salva em: ${storagePath}`);
+  console.log(`Sessão salva em: ${storagePath}`);
 
   await browser.close();
 }
 
 main().catch((error) => {
-  console.error("Erro ao salvar sessao do Instagram:", error);
+  console.error("Erro ao salvar sessão do Instagram:", error);
   process.exit(1);
 });

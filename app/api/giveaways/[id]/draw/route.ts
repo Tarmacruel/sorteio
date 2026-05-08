@@ -11,7 +11,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Nao foi possivel realizar o sorteio." },
+      { error: error instanceof Error ? error.message : "Não foi possível realizar o sorteio." },
       { status: 400 },
     );
   }

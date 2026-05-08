@@ -14,7 +14,7 @@ export const instagramPostUrlSchema = z
     } catch {
       return false;
     }
-  }, "Informe a URL publica de uma publicacao, Reel ou IGTV do Instagram.");
+  }, "Informe a URL pública de uma publicação, Reel ou IGTV do Instagram.");
 
 export const createGiveawaySchema = z.object({
   title: z.string().min(3).max(120),

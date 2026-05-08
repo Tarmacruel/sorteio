@@ -19,7 +19,7 @@ export function normalizeList(value?: string | string[]) {
 }
 
 export function formatDateTime(date?: Date | string | null) {
-  if (!date) return "Nao informado";
+  if (!date) return "Não informado";
   return new Intl.DateTimeFormat("pt-BR", {
     dateStyle: "short",
     timeStyle: "short",

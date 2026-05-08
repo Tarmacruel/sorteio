@@ -41,7 +41,7 @@ const defaultRules: RuleForm[] = [
   { type: "min_length", enabled: true, config: { minLength: 3 } },
 ];
 
-const steps = ["Dados basicos", "Regras", "Captura automatica", "Revisao"];
+const steps = ["Dados básicos", "Regras", "Captura automática", "Revisão"];
 
 function serializeRule(rule: RuleForm) {
   if (rule.type === "forbidden_words") {
@@ -118,13 +118,13 @@ export function GiveawayWizard() {
     setIsSubmitting(false);
 
     if (!response.ok) {
-      toast({ title: "Nao foi possivel criar", description: data.error });
+      toast({ title: "Não foi possível criar", description: data.error });
       return;
     }
 
     setGiveawayId(data.giveaway.id);
     setStep(1);
-    toast({ title: "Sorteio criado", description: "Agora configure as regras de participacao." });
+    toast({ title: "Sorteio criado", description: "Agora configure as regras de participação." });
   }
 
   async function saveRules() {
@@ -148,7 +148,7 @@ export function GiveawayWizard() {
     }
 
     setStep(2);
-    toast({ title: "Regras salvas", description: "A captura automatica ja pode ser iniciada." });
+    toast({ title: "Regras salvas", description: "A captura automática já pode ser iniciada." });
   }
 
   async function startCapture() {
@@ -168,8 +168,8 @@ export function GiveawayWizard() {
       setIsSubmitting(false);
       setCapturePreparationMessage(null);
       toast({
-        title: "Captura nao iniciada",
-        description: "A solicitacao demorou demais. Verifique Redis, worker e tente novamente.",
+        title: "Captura não iniciada",
+        description: "A solicitação demorou demais. Verifique Redis, worker e tente novamente.",
       });
       return;
     }
@@ -177,7 +177,7 @@ export function GiveawayWizard() {
     if (!response.ok) {
       setIsSubmitting(false);
       setCapturePreparationMessage(null);
-      toast({ title: "Captura nao iniciada", description: data.error });
+      toast({ title: "Captura não iniciada", description: data.error });
       return;
     }
 
@@ -215,15 +215,15 @@ export function GiveawayWizard() {
             <form onSubmit={createGiveaway} className="space-y-8">
               <div>
                 <p className="text-sm font-semibold uppercase text-primary">Etapa 1</p>
-                <h2 className="mt-2 text-2xl font-semibold">Dados basicos</h2>
+                <h2 className="mt-2 text-2xl font-semibold">Dados básicos</h2>
                 <p className="mt-2 text-muted-foreground">
-                  A captura sera feita automaticamente a partir da URL da postagem informada.
+                  A captura será feita automaticamente a partir da URL da postagem informada.
                 </p>
               </div>
 
               <div className="grid gap-5 md:grid-cols-2">
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="title">Titulo do sorteio</Label>
+                  <Label htmlFor="title">Título do sorteio</Label>
                   <Input id="title" value={title} onChange={(event) => setTitle(event.target.value)} required minLength={3} />
                 </div>
                 <div className="space-y-2 md:col-span-2">
@@ -258,11 +258,11 @@ export function GiveawayWizard() {
                   </div>
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="description">Descricao</Label>
-                  <Textarea id="description" name="description" placeholder="Contexto do sorteio, premio ou observacoes internas." />
+                  <Label htmlFor="description">Descrição</Label>
+                  <Textarea id="description" name="description" placeholder="Contexto do sorteio, prêmio ou observações internas." />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="commentDeadline">Data/hora limite dos comentarios</Label>
+                  <Label htmlFor="commentDeadline">Data/hora limite dos comentários</Label>
                   <Input id="commentDeadline" name="commentDeadline" type="datetime-local" />
                 </div>
               </div>
@@ -270,15 +270,15 @@ export function GiveawayWizard() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="flex items-center justify-between rounded-md border p-4">
                   <div>
-                    <Label>Considerar uma chance por usuario</Label>
-                    <p className="mt-1 text-sm text-muted-foreground">Impede repeticao de username no sorteio.</p>
+                    <Label>Considerar uma chance por usuário</Label>
+                    <p className="mt-1 text-sm text-muted-foreground">Impede repetição de username no sorteio.</p>
                   </div>
                   <Switch checked={oneChancePerUser} onCheckedChange={setOneChancePerUser} />
                 </div>
                 <div className="flex items-center justify-between rounded-md border p-4">
                   <div>
-                    <Label>Permitir multiplas chances por comentario</Label>
-                    <p className="mt-1 text-sm text-muted-foreground">Mantem comentarios validos como entradas independentes.</p>
+                    <Label>Permitir múltiplas chances por comentário</Label>
+                    <p className="mt-1 text-sm text-muted-foreground">Mantém comentários válidos como entradas independentes.</p>
                   </div>
                   <Switch checked={allowMultipleEntries} onCheckedChange={setAllowMultipleEntries} />
                 </div>
@@ -299,7 +299,7 @@ export function GiveawayWizard() {
                 <p className="text-sm font-semibold uppercase text-primary">Etapa 2</p>
                 <h2 className="mt-2 text-2xl font-semibold">Regras</h2>
                 <p className="mt-2 text-muted-foreground">
-                  Ative apenas as regras necessarias. Cada regra sera registrada na auditoria do resultado.
+                  Ative apenas as regras necessárias. Cada regra será registrada na auditoria do resultado.
                 </p>
               </div>
 
@@ -349,7 +349,7 @@ export function GiveawayWizard() {
                     {(rule.type === "blocked_users" || rule.type === "allowed_users") ? (
                       <Input
                         className="mt-4"
-                        placeholder="@usuario1, @usuario2"
+                        placeholder="@usuário1, @usuário2"
                         value={rule.config.usernames ?? ""}
                         onChange={(event) => updateRuleConfig(rule.type, { usernames: event.target.value })}
                       />
@@ -380,9 +380,9 @@ export function GiveawayWizard() {
             <div className="space-y-8">
               <div>
                 <p className="text-sm font-semibold uppercase text-primary">Etapa 3</p>
-                <h2 className="mt-2 text-2xl font-semibold">Captura automatica</h2>
+                <h2 className="mt-2 text-2xl font-semibold">Captura automática</h2>
                 <p className="mt-2 text-muted-foreground">
-                  O worker Playwright acessara somente comentarios publicamente disponiveis.
+                  O worker Playwright acessará somente comentários publicamente disponíveis.
                 </p>
               </div>
 
@@ -392,7 +392,7 @@ export function GiveawayWizard() {
                 <AlertDescription>
                   <div className="mt-2 grid gap-2 text-sm">
                     <span>
-                      <strong>Titulo:</strong> {title}
+                      <strong>Título:</strong> {title}
                     </span>
                     <span>
                       <strong>URL:</strong> {postUrl}
@@ -407,9 +407,9 @@ export function GiveawayWizard() {
               <div className="rounded-md border p-5">
                 <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                   <div>
-                    <h3 className="font-semibold">Iniciar captura automatica</h3>
+                    <h3 className="font-semibold">Iniciar captura automática</h3>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Se a postagem exigir login, estiver indisponivel ou limitada, a falha tecnica sera registrada.
+                      Se a postagem exigir login, estiver indisponível ou limitada, a falha técnica será registrada.
                     </p>
                   </div>
                   <Button onClick={startCapture} disabled={isSubmitting || !giveawayId}>
@@ -423,7 +423,7 @@ export function GiveawayWizard() {
                     <div>
                       <div className="font-medium">{capturePreparationMessage}</div>
                       <div className="mt-0.5 text-muted-foreground">
-                        A captura automatica foi solicitada. O acompanhamento sera aberto em seguida.
+                        A captura automática foi solicitada. O acompanhamento será aberto em seguida.
                       </div>
                     </div>
                   </div>
@@ -436,14 +436,14 @@ export function GiveawayWizard() {
             <div className="space-y-6">
               <div>
                 <p className="text-sm font-semibold uppercase text-primary">Etapa 4</p>
-                <h2 className="mt-2 text-2xl font-semibold">Revisao</h2>
+                <h2 className="mt-2 text-2xl font-semibold">Revisão</h2>
                 <p className="mt-2 text-muted-foreground">
-                  Depois que a captura terminar, revise validos e invalidos antes de realizar o sorteio.
+                  Depois que a captura terminar, revise válidos e inválidos antes de realizar o sorteio.
                 </p>
               </div>
               <Button asChild disabled={!giveawayId}>
                 <a href={giveawayId ? `/sorteios/${giveawayId}/revisao` : "#"}>
-                  Abrir revisao
+                  Abrir revisão
                   <ArrowRight className="size-4" />
                 </a>
               </Button>

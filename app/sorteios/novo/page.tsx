@@ -7,7 +7,7 @@ export default function NewGiveawayPage() {
         <p className="text-sm font-semibold uppercase text-primary">Novo Sorteio</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-normal">Configure um sorteio automatizado</h1>
         <p className="mt-2 text-muted-foreground">
-          Informe a postagem, defina regras e inicie a captura automatica de comentarios publicos.
+          Informe a postagem, defina regras e inicie a captura automática de comentários públicos.
         </p>
       </div>
       <GiveawayWizard />

@@ -38,7 +38,7 @@ export default async function PublicResultPage({ params }: { params: Promise<{ i
   if (!giveaway) {
     return (
       <main className="container py-10">
-        <h1 className="text-2xl font-semibold">Resultado nao encontrado</h1>
+        <h1 className="text-2xl font-semibold">Resultado não encontrado</h1>
         <Button asChild className="mt-4">
           <Link href="/">Voltar</Link>
         </Button>
@@ -68,7 +68,7 @@ export default async function PublicResultPage({ params }: { params: Promise<{ i
         <div className="container py-10">
           <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
             <div>
-              <p className="text-sm font-semibold uppercase text-primary">Resultado publico</p>
+              <p className="text-sm font-semibold uppercase text-primary">Resultado público</p>
               <h1 className="mt-2 text-4xl font-semibold tracking-normal">{giveaway.title}</h1>
               <p className="mt-3 max-w-3xl break-all text-muted-foreground">{giveaway.instagramPostUrl}</p>
             </div>
@@ -83,9 +83,9 @@ export default async function PublicResultPage({ params }: { params: Promise<{ i
         {auditStatus === "capture_failed" ? (
           <Alert variant="destructive" className="mb-6">
             <AlertTriangle className="size-4" />
-            <AlertTitle>Captura nao concluida</AlertTitle>
+            <AlertTitle>Captura não concluída</AlertTitle>
             <AlertDescription>
-              {latestCapture?.errorMessage ?? "Nao foi possivel capturar comentarios publicamente disponiveis desta postagem."}
+              {latestCapture?.errorMessage ?? "Não foi possível capturar comentários publicamente disponíveis desta postagem."}
             </AlertDescription>
           </Alert>
         ) : null}
@@ -106,12 +106,12 @@ export default async function PublicResultPage({ params }: { params: Promise<{ i
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <Metric label="participantes validos" value={valid} />
+              <Metric label="participantes válidos" value={valid} />
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <Metric label="comentarios invalidos" value={invalid} />
+              <Metric label="comentários inválidos" value={invalid} />
             </CardContent>
           </Card>
           <Card>
@@ -130,9 +130,9 @@ export default async function PublicResultPage({ params }: { params: Promise<{ i
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Posicao</TableHead>
-                    <TableHead>Usuario</TableHead>
-                    <TableHead>Comentario</TableHead>
+                    <TableHead>Posição</TableHead>
+                    <TableHead>Usuário</TableHead>
+                    <TableHead>Comentário</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -148,7 +148,7 @@ export default async function PublicResultPage({ params }: { params: Promise<{ i
                   {winners.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={3} className="text-center text-muted-foreground">
-                        Sorteio ainda nao realizado.
+                        Sorteio ainda não realizado.
                       </TableCell>
                     </TableRow>
                   ) : null}
@@ -172,11 +172,11 @@ export default async function PublicResultPage({ params }: { params: Promise<{ i
               </div>
               <div>
                 <div className="text-muted-foreground">Seed do sorteio</div>
-                <div className="break-all rounded-md bg-muted p-2 font-mono text-xs">{giveaway.drawSeed ?? "Nao gerada"}</div>
+                <div className="break-all rounded-md bg-muted p-2 font-mono text-xs">{giveaway.drawSeed ?? "Não gerada"}</div>
               </div>
               <div>
                 <div className="text-muted-foreground">Hash da lista de participantes</div>
-                <div className="break-all rounded-md bg-muted p-2 font-mono text-xs">{giveaway.participantsHash ?? "Nao gerado"}</div>
+                <div className="break-all rounded-md bg-muted p-2 font-mono text-xs">{giveaway.participantsHash ?? "Não gerado"}</div>
               </div>
             </CardContent>
           </Card>
@@ -191,9 +191,9 @@ export default async function PublicResultPage({ params }: { params: Promise<{ i
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Posicao</TableHead>
-                    <TableHead>Usuario</TableHead>
-                    <TableHead>Comentario</TableHead>
+                    <TableHead>Posição</TableHead>
+                    <TableHead>Usuário</TableHead>
+                    <TableHead>Comentário</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -238,14 +238,14 @@ export default async function PublicResultPage({ params }: { params: Promise<{ i
 
           <Card>
             <CardHeader>
-              <CardTitle>Exportacoes</CardTitle>
+              <CardTitle>Exportações</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3">
               {[
                 ["resultado-json", "Resultado em JSON"],
-                ["participantes-validos-csv", "Participantes validos em CSV"],
-                ["comentarios-invalidos-csv", "Comentarios invalidos em CSV"],
-                ["relatorio-tecnico-json", "Relatorio tecnico em JSON"],
+                ["participantes-validos-csv", "Participantes válidos em CSV"],
+                ["comentarios-invalidos-csv", "Comentários inválidos em CSV"],
+                ["relatorio-tecnico-json", "Relatório técnico em JSON"],
               ].map(([type, label]) => (
                 <Button key={type} asChild variant="outline" className="justify-start">
                   <a href={`/api/results/${id}/export/${type}`}>
@@ -255,7 +255,7 @@ export default async function PublicResultPage({ params }: { params: Promise<{ i
                 </Button>
               ))}
               <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-                Exportacao em PDF preparada para fase futura.
+                Exportação em PDF preparada para fase futura.
               </div>
             </CardContent>
           </Card>

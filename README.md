@@ -1,8 +1,8 @@
-# Sorteio Auditavel
+# Sorteio Auditável
 
-Aplicacao web SaaS para sorteios automatizados de comentarios do Instagram. O usuario informa a URL publica da postagem, configura regras, inicia a captura automatica via Playwright, revisa comentarios validos/invalidos, realiza o sorteio e publica uma pagina de resultado auditavel.
+Aplicação web SaaS para sorteios automatizados de comentários do Instagram. O usuário informa a URL pública da postagem, configura regras, inicia a captura automática via Playwright, revisa comentários válidos/inválidos, realiza o sorteio e publica uma página de resultado auditável.
 
-Nao existe importacao manual de comentarios nesta versao. Nao ha textarea para colar comentarios, upload de CSV, JSON ou planilha.
+Não existe importação manual de comentários nesta versão. Não há textarea para colar comentários, upload de CSV, JSON ou planilha.
 
 ## Stack
 
@@ -22,15 +22,15 @@ Nao existe importacao manual de comentarios nesta versao. Nao ha textarea para c
 ```txt
 app/                         Rotas web e API routes
 components/                  UI e componentes de produto
-lib/                         Prisma, fila, constantes e utilitarios
+lib/                         Prisma, fila, constantes e utilitários
 prisma/                      Schema e migrations
-schemas/                     Validacao Zod
-services/                    Captura, validacao, sorteio e auditoria
+schemas/                     Validação Zod
+services/                    Captura, validação, sorteio e auditoria
 types/                       Tipos compartilhados
 workers/                     Worker BullMQ + Playwright
 ```
 
-## Variaveis de ambiente
+## Variáveis de ambiente
 
 Copie `.env.example` para `.env`:
 
@@ -45,17 +45,17 @@ INSTAGRAM_CAPTURE_SCROLL_DELAY_MS=1000
 INSTAGRAM_CAPTURE_TIMEOUT_MS=3600000
 ```
 
-## Instalacao local
+## Instalação local
 
-O projeto usa os servicos locais da maquina. Nao e necessario Docker.
+O projeto usa os serviços locais da máquina. Não é necessário Docker.
 
-Crie o banco no PostgreSQL local com o superusuario `postgres`:
+Crie o banco no PostgreSQL local com o superusuário `postgres`:
 
 ```sql
 CREATE DATABASE sorteio;
 ```
 
-Depois instale dependencias e aplique as migrations:
+Depois instale dependências e aplique as migrations:
 
 ```bash
 npm install
@@ -63,17 +63,17 @@ npx prisma migrate deploy
 npx playwright install chromium
 ```
 
-Garanta tambem que o Redis local esteja rodando em `redis://localhost:6379`, pois a captura automatica usa BullMQ.
+Garanta também que o Redis local esteja rodando em `redis://localhost:6379`, pois a captura automática usa BullMQ.
 
-Antes de iniciar qualquer captura, salve uma sessao autenticada do Instagram:
+Antes de iniciar qualquer captura, salve uma sessão autenticada do Instagram:
 
 ```bash
 npm run instagram:auth
 ```
 
-O script abre o Chromium em modo visivel para login manual e salva somente o `storageState` em `storage/instagram-auth.json`. Usuario e senha nao sao salvos pela aplicacao. Sem esse arquivo, a API bloqueia o inicio da captura e solicita login manual.
+O script abre o Chromium em modo visível para login manual e salva somente o `storageState` em `storage/instagram-auth.json`. Usuário e senha não são salvos pela aplicação. Sem esse arquivo, a API bloqueia o início da captura e solicita login manual.
 
-## Execucao
+## Execução
 
 Use os scripts locais sem Docker:
 
@@ -84,9 +84,9 @@ scripts\status-sorteio.bat
 scripts\stop-sorteio.bat
 ```
 
-O `start-sorteio.bat` inicia PostgreSQL local quando houver servico, Redis em `localhost:6379`, worker BullMQ e Next.js. Logs ficam em `logs/`.
+O `start-sorteio.bat` inicia PostgreSQL local quando houver serviço, Redis em `localhost:6379`, worker BullMQ e Next.js. Logs ficam em `logs/`.
 
-Execucao manual alternativa:
+Execução manual alternativa:
 
 ```bash
 npm run dev
@@ -103,11 +103,11 @@ Abra `http://localhost:4000`.
 ## Fluxo principal
 
 1. Criar um sorteio em `/sorteios/novo`.
-2. Informar a URL publica da postagem do Instagram.
-3. Configurar regras de participacao.
-4. Iniciar captura automatica.
+2. Informar a URL pública da postagem do Instagram.
+3. Configurar regras de participação.
+4. Iniciar captura automática.
 5. Acompanhar status e logs em `/sorteios/[id]/captura`.
-6. Revisar comentarios validos e invalidos em `/sorteios/[id]/revisao`.
+6. Revisar comentários válidos e inválidos em `/sorteios/[id]/revisao`.
 7. Realizar o sorteio.
 8. Publicar e compartilhar `/resultado/[id]`.
 
@@ -117,62 +117,62 @@ O worker consome a fila BullMQ `instagram-capture` e executa `captureInstagramCo
 
 Responsabilidades implementadas:
 
-- Validar URL de publicacao do Instagram.
+- Validar URL de publicação do Instagram.
 - Abrir Chromium headless.
-- Acessar a postagem publica.
+- Acessar a postagem pública.
 - Exigir `storage/instagram-auth.json`, sem armazenar credenciais.
-- Clicar em botoes de "ver mais comentarios" quando disponiveis.
-- Rolar o painel de comentarios progressivamente.
-- Extrair username, texto e data/hora quando disponivel.
+- Clicar em botões de "ver mais comentários" quando disponíveis.
+- Rolar o painel de comentários progressivamente.
+- Extrair username, texto e data/hora quando disponível.
 - Remover duplicidades por hash.
-- Registrar captura parcial quando o Instagram nao carregar todos os comentarios informados.
-- Salvar comentarios no PostgreSQL.
-- Atualizar status, contadores e logs tecnicos.
-- Registrar auditoria de inicio, conclusao e falha.
+- Registrar captura parcial quando o Instagram não carregar todos os comentários informados.
+- Salvar comentários no PostgreSQL.
+- Atualizar status, contadores e logs técnicos.
+- Registrar auditoria de início, conclusão e falha.
 
-## Limitacoes tecnicas e de seguranca
+## Limitações técnicas e de segurança
 
-Esta versao coleta apenas comentarios publicamente acessiveis. Ela nao burla CAPTCHA, nao tenta contornar bloqueios, nao faz fingerprint spoofing, nao usa rotacao agressiva de proxy, nao forca login e nao solicita ou armazena senha do Instagram.
+Esta versão coleta apenas comentários publicamente acessíveis. Ela não burla CAPTCHA, não tenta contornar bloqueios, não faz fingerprint spoofing, não usa rotação agressiva de proxy, não força login e não solicita ou armazena senha do Instagram.
 
-Se a postagem exigir login, estiver indisponivel, for privada, estiver bloqueada ou o Instagram limitar o carregamento, o sistema registra falha tecnica e informa uma mensagem amigavel ao usuario.
+Se a postagem exigir login, estiver indisponível, for privada, estiver bloqueada ou o Instagram limitar o carregamento, o sistema registra falha técnica e informa uma mensagem amigável ao usuário.
 
-O HTML do Instagram muda com frequencia. A captura via Playwright pode precisar de ajustes nos seletores e deve ser usada com limites operacionais responsaveis.
+O HTML do Instagram muda com frequência. A captura via Playwright pode precisar de ajustes nos seletores e deve ser usada com limites operacionais responsáveis.
 
-## Regras de validacao
+## Regras de validação
 
-Regras disponiveis:
+Regras disponíveis:
 
-- Palavra ou frase obrigatoria.
-- Hashtag obrigatoria.
-- Quantidade minima de marcacoes.
-- Exigir ao menos uma marcacao.
+- Palavra ou frase obrigatória.
+- Hashtag obrigatória.
+- Quantidade mínima de marcações.
+- Exigir ao menos uma marcação.
 - Palavras proibidas.
-- Usuarios excluidos.
-- Usuarios permitidos.
+- Usuários excluídos.
+- Usuários permitidos.
 - Excluir perfil organizador.
-- Ignorar comentarios duplicados.
-- Ignorar comentarios vazios ou muito curtos.
-- Data/hora limite dos comentarios.
+- Ignorar comentários duplicados.
+- Ignorar comentários vazios ou muito curtos.
+- Data/hora limite dos comentários.
 
-Motivos de exclusao sao salvos no comentario e aparecem na revisao e exportacoes.
+Motivos de exclusão são salvos no comentário e aparecem na revisão e exportações.
 
 ## Sorteio e auditoria
 
-O sorteio usa `crypto` para gerar seed, cria hash canonico da lista de participantes validos e ordena participantes de forma deterministica por SHA-256. O resultado salva vencedores, suplentes, seed, hash, data/hora e logs de auditoria.
+O sorteio usa `crypto` para gerar seed, cria hash canônico da lista de participantes válidos e ordena participantes de forma determinística por SHA-256. O resultado salva vencedores, suplentes, seed, hash, data/hora e logs de auditoria.
 
-Exportacoes disponiveis na pagina publica:
+Exportações disponíveis na página pública:
 
 - Resultado em JSON.
-- Participantes validos em CSV.
-- Comentarios invalidos em CSV.
-- Relatorio tecnico em JSON.
+- Participantes válidos em CSV.
+- Comentários inválidos em CSV.
+- Relatório técnico em JSON.
 
-A exportacao em PDF fica preparada para fase futura.
+A exportação em PDF fica preparada para fase futura.
 
-## Proximos passos
+## Próximos passos
 
-- Integrar com a API oficial da Meta/Instagram Graph API quando o caso de uso e permissoes forem aprovados.
-- Adicionar autenticacao e multi-tenant.
-- Criar plano de rate limiting operacional por usuario.
+- Integrar com a API oficial da Meta/Instagram Graph API quando o caso de uso e permissões forem aprovados.
+- Adicionar autenticação e multi-tenant.
+- Criar plano de rate limiting operacional por usuário.
 - Melhorar observabilidade do worker.
-- Adicionar testes automatizados para validacao e sorteio.
+- Adicionar testes automatizados para validação e sorteio.

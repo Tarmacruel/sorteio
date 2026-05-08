@@ -18,7 +18,7 @@ export default async function CapturePage({ params }: { params: Promise<{ id: st
   if (!giveaway) {
     return (
       <main className="container py-10">
-        <h1 className="text-2xl font-semibold">Sorteio nao encontrado</h1>
+        <h1 className="text-2xl font-semibold">Sorteio não encontrado</h1>
         <Button asChild className="mt-4">
           <Link href="/dashboard">Voltar ao dashboard</Link>
         </Button>
@@ -30,7 +30,7 @@ export default async function CapturePage({ params }: { params: Promise<{ id: st
     <main className="container py-8">
       <div className="mb-8 flex flex-col justify-between gap-4 border-b pb-6 md:flex-row md:items-end">
         <div>
-          <p className="text-sm font-semibold uppercase text-primary">Captura automatica</p>
+          <p className="text-sm font-semibold uppercase text-primary">Captura automática</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-normal">{giveaway.title}</h1>
           <p className="mt-2 max-w-3xl truncate text-muted-foreground">{giveaway.instagramPostUrl}</p>
         </div>

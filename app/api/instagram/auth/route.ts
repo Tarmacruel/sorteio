@@ -49,7 +49,7 @@ export async function POST() {
   if (auth.exists) {
     return NextResponse.json({
       auth,
-      message: "Sessao autenticada do Instagram ja existe.",
+      message: "Sessão autenticada do Instagram já existe.",
     });
   }
 
@@ -59,7 +59,7 @@ export async function POST() {
     return NextResponse.json(
       {
         error:
-          "Nao foi possivel abrir a janela de login automaticamente. Execute `npm run instagram:auth` no terminal.",
+          "Não foi possível abrir a janela de login automaticamente. Execute `npm run instagram:auth` no terminal.",
         details: error instanceof Error ? error.message : String(error),
       },
       { status: 500 },
@@ -69,7 +69,7 @@ export async function POST() {
   return NextResponse.json(
     {
       auth,
-      message: "Janela de login do Instagram aberta. Conclua o login manualmente para salvar a sessao.",
+      message: "Janela de login do Instagram aberta. Conclua o login manualmente para salvar a sessão.",
     },
     { status: 202 },
   );

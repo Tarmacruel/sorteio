@@ -105,7 +105,7 @@ export async function validateGiveawayComments(giveawayId: string) {
   });
 
   if (!giveaway) {
-    throw new Error("Sorteio nao encontrado.");
+    throw new Error("Sorteio não encontrado.");
   }
 
   await prisma.giveaway.update({

@@ -43,8 +43,8 @@ function CommentTable({ comments, empty }: { comments: CommentRow[]; empty: stri
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Usuario</TableHead>
-          <TableHead>Comentario</TableHead>
+          <TableHead>Usuário</TableHead>
+          <TableHead>Comentário</TableHead>
           <TableHead>Data</TableHead>
           <TableHead>Motivo</TableHead>
         </TableRow>
@@ -57,7 +57,7 @@ function CommentTable({ comments, empty }: { comments: CommentRow[]; empty: stri
               <span className="line-clamp-2">{comment.text}</span>
             </TableCell>
             <TableCell>{formatDateTime(comment.commentedAt)}</TableCell>
-            <TableCell>{comment.invalidReason ?? "Valido"}</TableCell>
+            <TableCell>{comment.invalidReason ?? "Válido"}</TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -101,11 +101,11 @@ export function ReviewComments({ giveawayId }: { giveawayId: string }) {
     setIsMutating(false);
 
     if (!response.ok) {
-      toast({ title: "Validacao nao concluida", description: data.error });
+      toast({ title: "Validação não concluída", description: data.error });
       return;
     }
 
-    toast({ title: "Comentarios validados", description: `${data.valid} validos e ${data.invalid} invalidos.` });
+    toast({ title: "Comentários validados", description: `${data.valid} válidos e ${data.invalid} inválidos.` });
     await load();
   }
 
@@ -124,13 +124,13 @@ export function ReviewComments({ giveawayId }: { giveawayId: string }) {
           <Metric label="capturados" value={stats.total} />
         </div>
         <div className="rounded-md border bg-card p-4">
-          <Metric label="validos" value={stats.valid} />
+          <Metric label="válidos" value={stats.valid} />
         </div>
         <div className="rounded-md border bg-card p-4">
-          <Metric label="invalidos" value={stats.invalid} />
+          <Metric label="inválidos" value={stats.invalid} />
         </div>
         <div className="rounded-md border bg-card p-4">
-          <Metric label="usuarios unicos" value={stats.uniqueUsers} />
+          <Metric label="usuários únicos" value={stats.uniqueUsers} />
         </div>
         <div className="rounded-md border bg-card p-4">
           <Metric label="duplicados" value={stats.duplicates} />
@@ -141,8 +141,8 @@ export function ReviewComments({ giveawayId }: { giveawayId: string }) {
         <ShieldCheck className="size-4" />
         <AlertTitle>Regras aplicadas automaticamente</AlertTitle>
         <AlertDescription>
-          Comentarios invalidos mantem o motivo de exclusao para auditoria. A tela mostra ate 1000 itens por aba; as
-          exportacoes incluem a base completa.
+          Comentários inválidos mantêm o motivo de exclusão para auditoria. A tela mostra até 1000 itens por aba; as
+          exportações incluem a base completa.
         </AlertDescription>
       </Alert>
 
@@ -166,7 +166,7 @@ export function ReviewComments({ giveawayId }: { giveawayId: string }) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Comentarios capturados</CardTitle>
+          <CardTitle>Comentários capturados</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -179,14 +179,14 @@ export function ReviewComments({ giveawayId }: { giveawayId: string }) {
           ) : (
             <Tabs defaultValue="valid">
               <TabsList>
-                <TabsTrigger value="valid">Validos</TabsTrigger>
-                <TabsTrigger value="invalid">Invalidos</TabsTrigger>
+                <TabsTrigger value="valid">Válidos</TabsTrigger>
+                <TabsTrigger value="invalid">Inválidos</TabsTrigger>
               </TabsList>
               <TabsContent value="valid">
-                <CommentTable comments={validData?.comments ?? []} empty="Nenhum comentario valido encontrado." />
+                <CommentTable comments={validData?.comments ?? []} empty="Nenhum comentário válido encontrado." />
               </TabsContent>
               <TabsContent value="invalid">
-                <CommentTable comments={invalidData?.comments ?? []} empty="Nenhum comentario invalido encontrado." />
+                <CommentTable comments={invalidData?.comments ?? []} empty="Nenhum comentário inválido encontrado." />
               </TabsContent>
             </Tabs>
           )}

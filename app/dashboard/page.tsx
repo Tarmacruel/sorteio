@@ -48,7 +48,7 @@ export default async function DashboardPage() {
   try {
     giveaways = await getGiveaways();
   } catch (caught) {
-    error = caught instanceof Error ? caught.message : "Nao foi possivel conectar ao banco.";
+    error = caught instanceof Error ? caught.message : "Não foi possível conectar ao banco.";
   }
 
   const totals = giveaways.reduce(
@@ -68,7 +68,7 @@ export default async function DashboardPage() {
         <div>
           <p className="text-sm font-semibold uppercase text-primary">Dashboard</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-normal">Sorteios</h1>
-          <p className="mt-2 text-muted-foreground">Acompanhe captura, validacao, sorteio e auditoria em um unico lugar.</p>
+          <p className="mt-2 text-muted-foreground">Acompanhe captura, validação, sorteio e auditoria em um único lugar.</p>
         </div>
         <Button asChild>
           <Link href="/sorteios/novo">
@@ -81,9 +81,9 @@ export default async function DashboardPage() {
       {error ? (
         <Alert variant="destructive" className="mt-6">
           <AlertCircle className="size-4" />
-          <AlertTitle>Banco indisponivel</AlertTitle>
+          <AlertTitle>Banco indisponível</AlertTitle>
           <AlertDescription>
-            Verifique se PostgreSQL e Redis locais estao em execucao, configure `DATABASE_URL` e execute as migracoes Prisma.
+            Verifique se PostgreSQL e Redis locais estão em execução, configure `DATABASE_URL` e execute as migrações Prisma.
           </AlertDescription>
         </Alert>
       ) : null}
@@ -96,12 +96,12 @@ export default async function DashboardPage() {
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <Metric label="comentarios" value={totals.comments} />
+            <Metric label="comentários" value={totals.comments} />
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <Metric label="validos" value={totals.valid} />
+            <Metric label="válidos" value={totals.valid} />
           </CardContent>
         </Card>
         <Card>
@@ -125,7 +125,7 @@ export default async function DashboardPage() {
           {giveaways.length === 0 ? (
             <div className="flex min-h-52 flex-col items-center justify-center rounded-md border border-dashed text-center">
               <p className="font-medium">Nenhum sorteio criado ainda.</p>
-              <p className="mt-2 text-sm text-muted-foreground">Comece informando a URL publica da postagem do Instagram.</p>
+              <p className="mt-2 text-sm text-muted-foreground">Comece informando a URL pública da postagem do Instagram.</p>
               <Button asChild className="mt-5">
                 <Link href="/sorteios/novo">Criar sorteio</Link>
               </Button>
@@ -134,14 +134,14 @@ export default async function DashboardPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Titulo</TableHead>
+                  <TableHead>Título</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Captura</TableHead>
                   <TableHead className="text-right">Capturados</TableHead>
-                  <TableHead className="text-right">Validos</TableHead>
-                  <TableHead className="text-right">Excluidos</TableHead>
+                  <TableHead className="text-right">Válidos</TableHead>
+                  <TableHead className="text-right">Excluídos</TableHead>
                   <TableHead>Criado em</TableHead>
-                  <TableHead className="text-right">Acoes</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -162,7 +162,7 @@ export default async function DashboardPage() {
                         </div>
                         {latestCapture?.expectedCommentsCount ? (
                           <div className="mt-1 text-xs text-muted-foreground">
-                            {giveaway._count.comments}/{latestCapture.expectedCommentsCount} comentarios
+                            {giveaway._count.comments}/{latestCapture.expectedCommentsCount} comentários
                           </div>
                         ) : null}
                         {latestCapture?.warningMessage ? (

@@ -170,7 +170,7 @@ async function detectInstagramBlockers(page: Page): Promise<InstagramBlocker | n
     return {
       status: "blocked",
       reason: "login_required",
-      message: "Nao foi possivel continuar: Instagram solicitou login, verificacao ou bloqueou o carregamento.",
+      message: "Não foi possível continuar: Instagram solicitou login, verificação ou bloqueou o carregamento.",
     };
   }
 
@@ -178,7 +178,7 @@ async function detectInstagramBlockers(page: Page): Promise<InstagramBlocker | n
     return {
       status: "blocked",
       reason: "checkpoint_or_challenge",
-      message: "Nao foi possivel continuar: Instagram solicitou verificacao de seguranca.",
+      message: "Não foi possível continuar: Instagram solicitou verificação de segurança.",
     };
   }
 
@@ -191,9 +191,9 @@ async function detectInstagramBlockers(page: Page): Promise<InstagramBlocker | n
     "verify your account",
     "suspicious activity",
     "atividade suspeita",
-    "codigo de seguranca",
+    "codigo de segurança",
     "verifique sua conta",
-    "desafio de seguranca",
+    "desafio de segurança",
     "login to continue",
     "log in to continue",
     "entre para continuar",
@@ -204,7 +204,7 @@ async function detectInstagramBlockers(page: Page): Promise<InstagramBlocker | n
     return {
       status: "blocked",
       reason: "blocked_or_verification_required",
-      message: "Nao foi possivel continuar: Instagram solicitou login, verificacao ou bloqueou o carregamento.",
+      message: "Não foi possível continuar: Instagram solicitou login, verificação ou bloqueou o carregamento.",
     };
   }
 
@@ -212,9 +212,9 @@ async function detectInstagramBlockers(page: Page): Promise<InstagramBlocker | n
     "sorry, this page isn't available",
     "this page isn't available",
     "page not found",
-    "pagina nao esta disponivel",
-    "publicacao removida",
-    "conteudo indisponivel",
+    "página não está disponível",
+    "publicação removida",
+    "conteudo indisponível",
   ];
 
   if (unavailableSignals.some((signal) => text.includes(signal))) {
@@ -298,7 +298,7 @@ async function extractExpectedCommentCount(page: Page): Promise<number | null> {
 
       const extractFromLabeledText = (value) => {
         const simplified = simplify(value);
-        const matches = Array.from(simplified.matchAll(/([0-9][0-9.,]*(?:\s*(?:mil|k))?)\s*(?:comentario|comentarios|comment|comments)\b/g));
+        const matches = Array.from(simplified.matchAll(/([0-9][0-9.,]*(?:\s*(?:mil|k))?)\s*(?:comentário|comentários|comment|comments)\b/g));
         return matches.map((match) => parseCount(match[1])).filter((count) => Number.isFinite(count));
       };
 
@@ -388,7 +388,7 @@ async function findCommentsScrollContainer(page: Page): Promise<ElementHandle<HT
 
 async function clickLoadMoreComments(page: Page) {
   const textPattern =
-    /ver mais comentarios|ver mais comentários|carregar mais comentarios|carregar mais comentários|ver comentarios anteriores|ver comentários anteriores|view more comments|load more comments|more comments|view previous comments|previous comments/i;
+    /ver mais comentários|ver mais comentários|carregar mais comentários|carregar mais comentários|ver comentários anteriores|ver comentários anteriores|view more comments|load more comments|more comments|view previous comments|previous comments/i;
 
   const visibleTextTarget = page.locator("button, [role='button'], a").filter({ hasText: textPattern }).first();
 
@@ -431,9 +431,9 @@ async function clickLoadMoreComments(page: Page) {
         .trim();
 
       const patterns = [
-        "ver mais comentarios",
-        "carregar mais comentarios",
-        "ver comentarios anteriores",
+        "ver mais comentários",
+        "carregar mais comentários",
+        "ver comentários anteriores",
         "view more comments",
         "load more comments",
         "more comments",
@@ -596,7 +596,7 @@ async function extractVisibleComments(page: Page): Promise<ExtractedComment[]> {
         /^[0-9]+ curtida[s]?$/.test(text) ||
         /^[0-9]+ resposta[s]?$/.test(text) ||
         /^[0-9]+\s*(sem|semana|semanas|d|dia|dias|h|min)$/.test(text) ||
-        text.includes("adicione um comentario") ||
+        text.includes("adicione um comentário") ||
         text.includes("add a comment") ||
         text.includes("posted a story") ||
         text.includes("sugestoes para voce")
@@ -791,8 +791,8 @@ function isKnownCaptureFailure(error: unknown) {
   return (
     error.message === captureMessages.unavailable ||
     error.message.includes("Instagram solicitou login") ||
-    error.message.includes("verificacao de seguranca") ||
-    error.message.includes("Informe a URL publica")
+    error.message.includes("verificação de segurança") ||
+    error.message.includes("Informe a URL pública")
   );
 }
 
@@ -810,7 +810,7 @@ async function captureUntilComplete(input: {
   let stopReason = "max_iterations";
   let scrollContainer = await findCommentsScrollContainer(input.page);
 
-  await appendCaptureLog(input.captureJobId, "Localizando painel de comentarios...", {
+  await appendCaptureLog(input.captureJobId, "Localizando painel de comentários...", {
     foundScrollableContainer: Boolean(scrollContainer),
   });
 
@@ -842,14 +842,14 @@ async function captureUntilComplete(input: {
       where: { id: input.captureJobId },
       data: {
         commentsFound: currentCount,
-        currentStep: `Comentarios unicos capturados ate o momento: ${currentCount}.`,
+        currentStep: `Comentários únicos capturados até o momento: ${currentCount}.`,
       },
     });
 
     if (currentCount > previousCount) {
       previousCount = currentCount;
       noGrowthRounds = 0;
-      await appendCaptureLog(input.captureJobId, `Comentarios unicos capturados ate o momento: ${currentCount}.`, {
+      await appendCaptureLog(input.captureJobId, `Comentários únicos capturados até o momento: ${currentCount}.`, {
         iteration: iteration + 1,
         expectedCount: input.expectedCount,
       });
@@ -861,7 +861,7 @@ async function captureUntilComplete(input: {
       stopReason = "no_growth";
       await appendCaptureLog(
         input.captureJobId,
-        `Nenhum novo comentario carregado apos ${noGrowthRounds} tentativas.`,
+        `Nenhum novo comentário carregado após ${noGrowthRounds} tentativas.`,
         {
           iteration: iteration + 1,
           commentsFound: currentCount,
@@ -883,7 +883,7 @@ async function captureUntilComplete(input: {
 
     const clicked = await clickLoadMoreComments(input.page);
     if (clicked || iteration === 0 || (iteration + 1) % 10 === 0) {
-      await appendCaptureLog(input.captureJobId, clicked ? "Carregando mais comentarios..." : "Rolando painel de comentarios...", {
+      await appendCaptureLog(input.captureJobId, clicked ? "Carregando mais comentários..." : "Rolando painel de comentários...", {
         iteration: iteration + 1,
         clickedLoadMore: clicked,
         commentsFound: currentCount,
@@ -916,7 +916,7 @@ export async function captureInstagramComments(input: {
     await failCapture({
       giveawayId: input.giveawayId,
       captureJobId: input.captureJobId,
-      message: "Informe a URL publica de uma publicacao do Instagram.",
+      message: "Informe a URL pública de uma publicação do Instagram.",
     });
   }
 
@@ -930,7 +930,7 @@ export async function captureInstagramComments(input: {
       captureJobId: input.captureJobId,
       status: "blocked",
       message:
-        "Login do Instagram obrigatorio. Execute o login manual para salvar a sessao antes de iniciar a captura.",
+        "Login do Instagram obrigatório. Execute o login manual para salvar a sessão antes de iniciar a captura.",
       details: {
         authStatePath,
         authenticated: false,
@@ -939,8 +939,8 @@ export async function captureInstagramComments(input: {
   }
 
   const openingMessage = hasAuthState
-    ? "Acessando publicacao com sessao autenticada..."
-    : "Acessando publicacao sem sessao autenticada...";
+    ? "Acessando publicação com sessão autenticada..."
+    : "Acessando publicação sem sessão autenticada...";
 
   await prisma.instagramCaptureJob.update({
     where: { id: input.captureJobId },
@@ -1000,7 +1000,7 @@ export async function captureInstagramComments(input: {
       });
     }
 
-    await appendCaptureLog(input.captureJobId, "Identificando total estimado de comentarios...");
+    await appendCaptureLog(input.captureJobId, "Identificando total estimado de comentários...");
     const expectedCount = await extractExpectedCommentCount(page);
 
     await prisma.instagramCaptureJob.update({
@@ -1008,16 +1008,16 @@ export async function captureInstagramComments(input: {
       data: {
         expectedCommentsCount: expectedCount,
         currentStep: expectedCount
-          ? `Total informado na publicacao: ${expectedCount} comentarios.`
-          : "Total informado na publicacao nao identificado.",
+          ? `Total informado na publicação: ${expectedCount} comentários.`
+          : "Total informado na publicação não identificado.",
       },
     });
 
     await appendCaptureLog(
       input.captureJobId,
       expectedCount
-        ? `Total informado na publicacao: ${expectedCount} comentarios.`
-        : "Total informado na publicacao nao identificado.",
+        ? `Total informado na publicação: ${expectedCount} comentários.`
+        : "Total informado na publicação não identificado.",
       {
         expectedCommentsCount: expectedCount,
       },
@@ -1045,7 +1045,7 @@ export async function captureInstagramComments(input: {
           expectedCommentsCount: expectedCount,
           stopReason: captureResult.stopReason,
           possibleCause:
-            "A estrutura do Instagram pode ter mudado, os comentarios podem nao estar carregaveis ou a publicacao pode exigir verificacao.",
+            "A estrutura do Instagram pode ter mudado, os comentários podem não estar carregáveis ou a publicação pode exigir verificação.",
           commentsExtractedBeforeSave: 0,
         },
       });
@@ -1083,7 +1083,7 @@ export async function captureInstagramComments(input: {
 
     const isPartial = Boolean(expectedCount && commentsSaved < expectedCount);
     const warningMessage = isPartial
-      ? `Captura parcial: foram capturados ${commentsSaved} de ${expectedCount} comentarios. O Instagram nao carregou novos comentarios apos varias tentativas.`
+      ? `Captura parcial: foram capturados ${commentsSaved} de ${expectedCount} comentários. O Instagram não carregou novos comentários após várias tentativas.`
       : null;
 
     await prisma.instagramCaptureJob.update({
@@ -1094,7 +1094,7 @@ export async function captureInstagramComments(input: {
         commentsFound: uniqueComments.length,
         commentsSaved,
         warningMessage,
-        currentStep: isPartial ? `Captura parcial concluida: ${commentsSaved} de ${expectedCount} comentarios.` : captureMessages.completed,
+        currentStep: isPartial ? `Captura parcial concluída: ${commentsSaved} de ${expectedCount} comentários.` : captureMessages.completed,
       },
     });
 
@@ -1106,7 +1106,7 @@ export async function captureInstagramComments(input: {
       },
     });
 
-    await appendCaptureLog(input.captureJobId, isPartial ? "Captura parcial concluida." : captureMessages.completed, {
+    await appendCaptureLog(input.captureJobId, isPartial ? "Captura parcial concluída." : captureMessages.completed, {
       commentsSaved,
       expectedCommentsCount: expectedCount,
       stopReason: captureResult.stopReason,

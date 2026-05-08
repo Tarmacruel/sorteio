@@ -14,7 +14,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 
     const giveaway = await prisma.giveaway.findUnique({ where: { id } });
     if (!giveaway) {
-      return NextResponse.json({ error: "Sorteio nao encontrado." }, { status: 404 });
+      return NextResponse.json({ error: "Sorteio não encontrado." }, { status: 404 });
     }
 
     await prisma.$transaction(async (tx) => {
@@ -58,7 +58,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     return NextResponse.json({ ok: true });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Nao foi possivel atualizar as regras." },
+      { error: error instanceof Error ? error.message : "Não foi possível atualizar as regras." },
       { status: 400 },
     );
   }

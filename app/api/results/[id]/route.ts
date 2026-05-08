@@ -28,7 +28,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   });
 
   if (!giveaway) {
-    return NextResponse.json({ error: "Resultado nao encontrado." }, { status: 404 });
+    return NextResponse.json({ error: "Resultado não encontrado." }, { status: 404 });
   }
 
   const [captured, valid, invalid] = await Promise.all([

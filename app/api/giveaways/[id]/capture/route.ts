@@ -45,11 +45,11 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
 
   const giveaway = await prisma.giveaway.findUnique({ where: { id } });
   if (!giveaway) {
-    return NextResponse.json({ error: "Sorteio nao encontrado." }, { status: 404 });
+    return NextResponse.json({ error: "Sorteio não encontrado." }, { status: 404 });
   }
 
   if (["capturing", "drawn"].includes(giveaway.status)) {
-    return NextResponse.json({ error: "Este sorteio nao pode iniciar uma nova captura agora." }, { status: 409 });
+    return NextResponse.json({ error: "Este sorteio não pode iniciar uma nova captura agora." }, { status: 409 });
   }
 
   const instagramAuth = getInstagramAuthStateStatus();
@@ -57,7 +57,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     return NextResponse.json(
       {
         error:
-          "Login do Instagram obrigatorio. Abra o login do Instagram, conclua a autenticacao manual e tente iniciar a captura novamente.",
+          "Login do Instagram obrigatório. Abra o login do Instagram, conclua a autenticação manual e tente iniciar a captura novamente.",
         instagramAuth,
       },
       { status: 428 },
@@ -72,7 +72,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
       logs: [
         {
           at: new Date().toISOString(),
-          message: "Captura automatica enfileirada.",
+          message: "Captura automática enfileirada.",
         },
       ],
     },
@@ -101,7 +101,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     return NextResponse.json({ captureJob }, { status: 202 });
   } catch (error) {
     const friendlyMessage =
-      "Nao foi possivel conectar ao Redis local para enfileirar a captura. Inicie o Redis em localhost:6379 e execute o worker de captura.";
+      "Não foi possível conectar ao Redis local para enfileirar a captura. Inicie o Redis em localhost:6379 e execute o worker de captura.";
 
     await prisma.instagramCaptureJob.update({
       where: { id: captureJob.id },
@@ -113,7 +113,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
         logs: [
           {
             at: new Date().toISOString(),
-            message: "Falha ao enfileirar captura automatica.",
+            message: "Falha ao enfileirar captura automática.",
             details: {
               error: error instanceof Error ? error.message : String(error),
             },
@@ -145,7 +145,7 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
   });
 
   if (!captureJob) {
-    return NextResponse.json({ error: "Nao ha captura ativa para cancelar." }, { status: 404 });
+    return NextResponse.json({ error: "Não há captura ativa para cancelar." }, { status: 404 });
   }
 
   await removeInstagramCaptureJob(captureJob.id).catch(() => undefined);
@@ -155,7 +155,7 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
     data: {
       status: "cancelled",
       finishedAt: new Date(),
-      currentStep: "Captura cancelada pelo usuario.",
+      currentStep: "Captura cancelada pelo usuário.",
     },
   });
 

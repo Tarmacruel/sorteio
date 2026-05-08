@@ -51,12 +51,12 @@ type CaptureState = {
 };
 
 function formatElapsedTime(startedAt?: string | null, finishedAt?: string | null, now = Date.now()) {
-  if (!startedAt) return "Aguardando inicio";
+  if (!startedAt) return "Aguardando início";
 
   const start = new Date(startedAt).getTime();
   const end = finishedAt ? new Date(finishedAt).getTime() : now;
 
-  if (Number.isNaN(start) || Number.isNaN(end) || end < start) return "Aguardando inicio";
+  if (Number.isNaN(start) || Number.isNaN(end) || end < start) return "Aguardando início";
 
   const totalSeconds = Math.floor((end - start) / 1000);
   const hours = Math.floor(totalSeconds / 3600);
@@ -108,7 +108,7 @@ function formatDiagnosticSummary(details?: Record<string, unknown> | null) {
   }
 
   if (title) {
-    items.push(`Titulo da pagina carregada: ${title}`);
+    items.push(`Título da página carregada: ${title}`);
   }
 
   if (selectorCounts) {
@@ -117,24 +117,24 @@ function formatDiagnosticSummary(details?: Record<string, unknown> | null) {
     const links = selectorCounts.links;
 
     if (typeof commentPermalinks === "number" && commentPermalinks === 0) {
-      items.push("Nenhum permalink publico de comentario foi encontrado no HTML carregado.");
+      items.push("Nenhum permalink público de comentário foi encontrado no HTML carregado.");
     }
 
     if (typeof articleListItems === "number" && articleListItems === 0) {
-      items.push("Nenhum item de comentario foi encontrado nos seletores principais.");
+      items.push("Nenhum item de comentário foi encontrado nos seletores principais.");
     }
 
     if (typeof links === "number") {
-      items.push(`Links detectados na pagina: ${links}.`);
+      items.push(`Links detectados na página: ${links}.`);
     }
   }
 
   if (possibleCause) {
-    items.push(`Causa provavel: ${possibleCause}`);
+    items.push(`Causa provável: ${possibleCause}`);
   }
 
   if (typeof technicalError?.message === "string") {
-    items.push(`Erro tecnico original: ${technicalError.message}`);
+    items.push(`Erro técnico original: ${technicalError.message}`);
   }
 
   return items;
@@ -173,8 +173,8 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
   async function startCapture() {
     if (!state?.instagramAuth.exists) {
       toast({
-        title: "Login do Instagram obrigatorio",
-        description: "Abra o login do Instagram e conclua a autenticacao manual antes da captura.",
+        title: "Login do Instagram obrigatório",
+        description: "Abra o login do Instagram e conclua a autenticação manual antes da captura.",
       });
       return;
     }
@@ -189,8 +189,8 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
     } catch {
       setIsMutating(false);
       toast({
-        title: "Captura nao iniciada",
-        description: "A solicitacao demorou demais. Verifique Redis, worker e tente novamente.",
+        title: "Captura não iniciada",
+        description: "A solicitação demorou demais. Verifique Redis, worker e tente novamente.",
       });
       return;
     }
@@ -198,11 +198,11 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
     setIsMutating(false);
 
     if (!response.ok) {
-      toast({ title: "Captura nao iniciada", description: data.error });
+      toast({ title: "Captura não iniciada", description: data.error });
       return;
     }
 
-    toast({ title: "Captura enfileirada", description: "O worker Playwright assumira o job." });
+    toast({ title: "Captura enfileirada", description: "O worker Playwright assumirá o job." });
     await load();
   }
 
@@ -217,8 +217,8 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
     } catch {
       setIsStartingAuth(false);
       toast({
-        title: "Login nao iniciado",
-        description: "Nao foi possivel abrir a janela de login. Rode `npm run instagram:auth` no terminal.",
+        title: "Login não iniciado",
+        description: "Não foi possível abrir a janela de login. Rode `npm run instagram:auth` no terminal.",
       });
       return;
     }
@@ -226,7 +226,7 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
     setIsStartingAuth(false);
 
     if (!response.ok) {
-      toast({ title: "Login nao iniciado", description: data.error ?? "Tente executar `npm run instagram:auth`." });
+      toast({ title: "Login não iniciado", description: data.error ?? "Tente executar `npm run instagram:auth`." });
       return;
     }
 
@@ -248,8 +248,8 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
     } catch {
       setIsMutating(false);
       toast({
-        title: "Cancelamento nao realizado",
-        description: "A solicitacao demorou demais. Tente atualizar a pagina e cancelar novamente.",
+        title: "Cancelamento não realizado",
+        description: "A solicitação demorou demais. Tente atualizar a página e cancelar novamente.",
       });
       return;
     }
@@ -257,7 +257,7 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
     setIsMutating(false);
 
     if (!response.ok) {
-      toast({ title: "Cancelamento nao realizado", description: data.error });
+      toast({ title: "Cancelamento não realizado", description: data.error });
       return;
     }
 
@@ -309,8 +309,8 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
               <Play className="size-4" />
               <AlertTitle>Nenhuma captura iniciada</AlertTitle>
               <AlertDescription>
-                Faca login no Instagram e inicie a captura automatica para que o worker acesse a postagem e salve
-                comentarios carregaveis.
+                Faça login no Instagram e inicie a captura automática para que o worker acesse a postagem e salve
+                comentários carregáveis.
               </AlertDescription>
             </Alert>
           ) : null}
@@ -318,12 +318,12 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
           {!hasInstagramAuth && !isLoading ? (
             <Alert variant="destructive">
               <AlertCircle className="size-4" />
-              <AlertTitle>Login do Instagram obrigatorio</AlertTitle>
+              <AlertTitle>Login do Instagram obrigatório</AlertTitle>
               <AlertDescription>
                 <div className="space-y-3">
                   <p>
-                    A captura nao sera iniciada sem uma sessao Playwright salva. Clique em abrir login, faca a
-                    autenticacao manual na janela do Instagram e aguarde a sessao ser salva.
+                    A captura não será iniciada sem uma sessão Playwright salva. Clique em abrir login, faça a
+                    autenticação manual na janela do Instagram e aguarde a sessão ser salva.
                   </p>
                   <div className="text-xs text-destructive/80">Arquivo esperado: {state?.instagramAuth.path}</div>
                   <div className="flex flex-col gap-2 sm:flex-row">
@@ -344,9 +344,9 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
           {hasInstagramAuth ? (
             <Alert>
               <CheckCircle2 className="size-4" />
-              <AlertTitle>Sessao do Instagram pronta</AlertTitle>
+              <AlertTitle>Sessão do Instagram pronta</AlertTitle>
               <AlertDescription>
-                O worker usara a sessao autenticada salva em {state?.instagramAuth.path}
+                O worker usará a sessão autenticada salva em {state?.instagramAuth.path}
                 {state?.instagramAuth.updatedAt ? ` desde ${formatDateTime(state.instagramAuth.updatedAt)}.` : "."}
               </AlertDescription>
             </Alert>
@@ -365,13 +365,13 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
                       <div>
                         <div className="font-semibold">Captura em andamento. Pode demorar alguns minutos.</div>
                         <div className="mt-1 text-sm text-primary-foreground/80">
-                          Mantenha esta tela aberta. Nao e necessario atualizar a pagina.
+                          Mantenha esta tela aberta. Não é necessário atualizar a página.
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 rounded-md bg-white/[0.12] px-3 py-2 text-sm font-medium">
                       <Loader2 className="size-4 animate-spin" />
-                      {capturedCount} comentarios
+                      {capturedCount} comentários
                     </div>
                   </div>
                 </div>
@@ -388,8 +388,8 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
                       <Clock3 className="size-4" />
                       Tempo decorrido: {elapsedTime}
                     </span>
-                    <span>Ultima atualizacao: {formatDateTime(lastUpdatedAt)}</span>
-                    <span>Inicio: {formatDateTime(job.startedAt)}</span>
+                    <span>Última atualização: {formatDateTime(lastUpdatedAt)}</span>
+                    <span>Início: {formatDateTime(job.startedAt)}</span>
                     {expectedCount ? <span>Informados pelo Instagram: {expectedCount}</span> : null}
                   </div>
                 </div>
@@ -409,8 +409,8 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
                   <AlertCircle className="size-4" />
                   <AlertTitle>Captura anterior ficou pendente</AlertTitle>
                   <AlertDescription>
-                    Este job ficou registrado como pendente, mas o sorteio nao esta mais em captura. Voce pode cancelar
-                    este job antigo ou iniciar uma nova captura automatica.
+                    Este job ficou registrado como pendente, mas o sorteio não está mais em captura. Você pode cancelar
+                    este job antigo ou iniciar uma nova captura automática.
                   </AlertDescription>
                 </Alert>
               ) : null}
@@ -418,9 +418,9 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
               {isQueuedTooLong ? (
                 <Alert variant="destructive">
                   <AlertCircle className="size-4" />
-                  <AlertTitle>Worker ainda nao iniciou a captura</AlertTitle>
+                  <AlertTitle>Worker ainda não iníciou a captura</AlertTitle>
                   <AlertDescription>
-                    O job esta na fila ha mais de 1 minuto. Verifique se o Redis local esta rodando em `localhost:6379`
+                    O job está na fila há mais de 1 minuto. Verifique se o Redis local está rodando em `localhost:6379`
                     e se o worker foi iniciado com `npm run worker:dev`.
                   </AlertDescription>
                 </Alert>
@@ -433,12 +433,12 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
                     <div className="mt-1 text-sm font-medium">{activeStep}</div>
                   </div>
                   <div>
-                    <div className="text-xs font-medium uppercase text-muted-foreground">Comentarios capturados</div>
+                    <div className="text-xs font-medium uppercase text-muted-foreground">Comentários capturados</div>
                     <div className="mt-1 text-sm font-medium">{capturedCount}</div>
                   </div>
                   <div>
                     <div className="text-xs font-medium uppercase text-muted-foreground">
-                      {expectedCount ? "Informados pelo Instagram" : "Atualizacao automatica"}
+                      {expectedCount ? "Informados pelo Instagram" : "Atualização automática"}
                     </div>
                     {expectedCount ? (
                       <div className="mt-1 text-sm font-medium">{expectedCount}</div>
@@ -460,11 +460,11 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
                     <div className="space-y-3">
                       <p>
                         {job.errorMessage ??
-                          "Nao foi possivel continuar: Instagram solicitou login, verificacao ou bloqueou o carregamento."}
+                          "Não foi possível continuar: Instagram solicitou login, verificação ou bloqueou o carregamento."}
                       </p>
                       {diagnosticSummary.length > 0 ? (
                         <div className="rounded-md border border-destructive/30 bg-background p-3 text-foreground">
-                          <div className="text-sm font-semibold">Diagnostico da tentativa</div>
+                          <div className="text-sm font-semibold">Diagnóstico da tentativa</div>
                           <ul className="mt-2 list-disc space-y-1 pl-4 text-xs">
                             {diagnosticSummary.map((item) => (
                               <li key={item}>{item}</li>
@@ -474,7 +474,7 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
                       ) : null}
                       {formattedLatestDetails ? (
                         <details className="rounded-md border border-destructive/30 bg-background p-3 text-left">
-                          <summary className="cursor-pointer font-medium">Ver detalhes tecnicos para investigacao</summary>
+                          <summary className="cursor-pointer font-medium">Ver detalhes técnicos para investigação</summary>
                           <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words text-xs text-foreground">
                             {formattedLatestDetails}
                           </pre>
@@ -486,13 +486,13 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
               ) : isFailed ? (
                 <Alert variant="destructive">
                   <AlertCircle className="size-4" />
-                  <AlertTitle>Falha tecnica na captura</AlertTitle>
+                  <AlertTitle>Falha técnica na captura</AlertTitle>
                   <AlertDescription>
                     <div className="space-y-3">
-                      <p>{job.errorMessage ?? "Nao foi possivel capturar comentarios publicamente disponiveis desta postagem."}</p>
+                      <p>{job.errorMessage ?? "Não foi possível capturar comentários publicamente disponíveis desta postagem."}</p>
                       {diagnosticSummary.length > 0 ? (
                         <div className="rounded-md border border-destructive/30 bg-background p-3 text-foreground">
-                          <div className="text-sm font-semibold">Diagnostico da tentativa</div>
+                          <div className="text-sm font-semibold">Diagnóstico da tentativa</div>
                           <ul className="mt-2 list-disc space-y-1 pl-4 text-xs">
                             {diagnosticSummary.map((item) => (
                               <li key={item}>{item}</li>
@@ -502,7 +502,7 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
                       ) : null}
                       {formattedLatestDetails ? (
                         <details className="rounded-md border border-destructive/30 bg-background p-3 text-left">
-                          <summary className="cursor-pointer font-medium">Ver detalhes tecnicos para investigacao</summary>
+                          <summary className="cursor-pointer font-medium">Ver detalhes técnicos para investigação</summary>
                           <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words text-xs text-foreground">
                             {formattedLatestDetails}
                           </pre>
@@ -516,27 +516,27 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
               {isPartial ? (
                 <Alert>
                   <AlertCircle className="size-4" />
-                  <AlertTitle>Captura parcial concluida</AlertTitle>
+                  <AlertTitle>Captura parcial concluída</AlertTitle>
                   <AlertDescription>
                     {job.warningMessage ??
-                      `Foram capturados ${capturedCount}${expectedCount ? ` de ${expectedCount}` : ""} comentarios. O Instagram nao carregou novos comentarios apos varias tentativas.`}
+                      `Foram capturados ${capturedCount}${expectedCount ? ` de ${expectedCount}` : ""} comentários. O Instagram não carregou novos comentários após várias tentativas.`}
                   </AlertDescription>
                 </Alert>
               ) : isCompleted && capturedCount === 0 ? (
                 <Alert variant="destructive">
                   <AlertCircle className="size-4" />
-                  <AlertTitle>Captura concluida sem comentarios</AlertTitle>
+                  <AlertTitle>Captura concluída sem comentários</AlertTitle>
                   <AlertDescription>
-                    Nenhum comentario foi salvo para este sorteio. Inicie uma nova captura para gerar um diagnostico
+                    Nenhum comentário foi salvo para este sorteio. Inicie uma nova captura para gerar um diagnostico
                     atualizado antes de revisar participantes.
                   </AlertDescription>
                 </Alert>
               ) : isCompleted ? (
                 <Alert>
                   <CheckCircle2 className="size-4" />
-                  <AlertTitle>Captura concluida</AlertTitle>
+                  <AlertTitle>Captura concluída</AlertTitle>
                   <AlertDescription>
-                    Os comentarios capturados estao prontos para revisao e validacao automatica.
+                    Os comentários capturados estão prontos para revisão e validação automática.
                   </AlertDescription>
                 </Alert>
               ) : null}
@@ -546,7 +546,7 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
                   <Ban className="size-4" />
                   <AlertTitle>Captura cancelada</AlertTitle>
                   <AlertDescription>
-                    Esta captura foi cancelada. Voce pode iniciar uma nova captura automatica para este sorteio.
+                    Esta captura foi cancelada. Você pode iniciar uma nova captura automática para este sorteio.
                   </AlertDescription>
                 </Alert>
               ) : null}
@@ -561,17 +561,17 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
               <Metric label="capturados" value={state?.stats.captured ?? 0} />
             </div>
             <div className="rounded-md border p-4">
-              <Metric label="validos" value={state?.stats.valid ?? 0} />
+              <Metric label="válidos" value={state?.stats.valid ?? 0} />
             </div>
             <div className="rounded-md border p-4">
-              <Metric label="excluidos" value={state?.stats.invalid ?? 0} />
+              <Metric label="excluídos" value={state?.stats.invalid ?? 0} />
             </div>
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button onClick={startCapture} disabled={isMutating || isActive || !hasInstagramAuth}>
               {isMutating ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4" />}
-              Iniciar captura automatica
+              Iniciar captura automática
             </Button>
             {!hasInstagramAuth ? (
               <Button type="button" variant="outline" onClick={startInstagramAuth} disabled={isStartingAuth}>
@@ -587,13 +587,13 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
               <Button asChild variant="secondary">
                 <Link href={`/sorteios/${giveawayId}/revisao`}>
                   <CheckCircle2 className="size-4" />
-                  Revisar comentarios
+                  Revisar comentários
                 </Link>
               </Button>
             ) : (
               <Button variant="secondary" disabled>
                 <CheckCircle2 className="size-4" />
-                Revisar comentarios
+                Revisar comentários
               </Button>
             )}
           </div>
@@ -612,13 +612,13 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
                 Aguardando worker iniciar...
               </div>
               <div className="mt-1 text-muted-foreground">
-                A captura ja esta na fila e sera iniciada assim que o worker assumir o job.
+                A captura já está na fila e será iniciada assim que o worker assumir o job.
               </div>
             </div>
           ) : null}
           {logs.length === 0 ? (
             <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-              {job?.status === "queued" ? "Aguardando worker iniciar..." : "Os eventos tecnicos aparecerao aqui durante a captura."}
+              {job?.status === "queued" ? "Aguardando worker iniciar..." : "Os eventos técnicos aparecerão aqui durante a captura."}
             </div>
           ) : (
             <div className="space-y-3">
@@ -649,7 +649,7 @@ function LogEntry({ log, isLatest }: { log: CaptureLog; isLatest: boolean }) {
       <div className="text-xs text-muted-foreground">{formatDateTime(log.at)}</div>
       {formattedDetails ? (
         <details className="mt-3 rounded-md border bg-background p-3">
-          <summary className="cursor-pointer text-xs font-medium text-muted-foreground">Detalhes tecnicos</summary>
+          <summary className="cursor-pointer text-xs font-medium text-muted-foreground">Detalhes técnicos</summary>
           <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-words text-xs">
             {formattedDetails}
           </pre>
