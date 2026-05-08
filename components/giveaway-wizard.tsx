@@ -67,6 +67,7 @@ export function GiveawayWizard() {
   const [allowMultipleEntries, setAllowMultipleEntries] = React.useState(false);
   const [rules, setRules] = React.useState<RuleForm[]>(defaultRules);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [capturePreparationMessage, setCapturePreparationMessage] = React.useState<string | null>(null);
 
   function updateRule(type: RuleType, patch: Partial<RuleForm>) {
     setRules((current) => current.map((rule) => (rule.type === type ? { ...rule, ...patch } : rule)));
@@ -138,19 +139,22 @@ export function GiveawayWizard() {
 
   async function startCapture() {
     if (!giveawayId) return;
+    setCapturePreparationMessage("Preparando captura...");
     setIsSubmitting(true);
 
     const response = await fetch(`/api/giveaways/${giveawayId}/capture`, {
       method: "POST",
     });
     const data = await response.json().catch(() => ({}));
-    setIsSubmitting(false);
 
     if (!response.ok) {
+      setIsSubmitting(false);
+      setCapturePreparationMessage(null);
       toast({ title: "Captura nao iniciada", description: data.error });
       return;
     }
 
+    setCapturePreparationMessage("Captura enviada para a fila. Abrindo acompanhamento...");
     router.push(`/sorteios/${giveawayId}/captura`);
   }
 
@@ -383,9 +387,20 @@ export function GiveawayWizard() {
                   </div>
                   <Button onClick={startCapture} disabled={isSubmitting || !giveawayId}>
                     {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4" />}
-                    Iniciar captura
+                    {isSubmitting ? "Preparando captura..." : "Iniciar captura"}
                   </Button>
                 </div>
+                {capturePreparationMessage ? (
+                  <div className="mt-4 flex items-center gap-3 rounded-md border bg-secondary/50 p-3 text-sm">
+                    <Loader2 className="size-4 animate-spin text-primary" />
+                    <div>
+                      <div className="font-medium">{capturePreparationMessage}</div>
+                      <div className="mt-0.5 text-muted-foreground">
+                        A captura automatica foi solicitada. O acompanhamento sera aberto em seguida.
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
           ) : null}
