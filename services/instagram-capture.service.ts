@@ -1,10 +1,10 @@
 import fs from "node:fs";
-import path from "node:path";
 import { chromium, type ElementHandle, type Page } from "playwright";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { captureMessages } from "@/lib/constants";
 import { createCommentSignature, validateInstagramPostUrl } from "@/lib/instagram";
+import { getInstagramAuthStatePath } from "@/lib/instagram-auth";
 import { registerAuditLog } from "@/services/audit.service";
 
 type CaptureLog = {
@@ -62,8 +62,7 @@ function getCaptureConfig(): CaptureConfig {
 }
 
 function resolveAuthStatePath() {
-  const configuredPath = process.env.INSTAGRAM_AUTH_STATE_PATH ?? "storage/instagram-auth.json";
-  return path.isAbsolute(configuredPath) ? configuredPath : path.resolve(process.cwd(), configuredPath);
+  return getInstagramAuthStatePath();
 }
 
 function normalizeSearchText(value: string) {
@@ -855,6 +854,21 @@ export async function captureInstagramComments(input: {
   const config = getCaptureConfig();
   const authStatePath = resolveAuthStatePath();
   const hasAuthState = fs.existsSync(authStatePath);
+
+  if (!hasAuthState) {
+    await failCapture({
+      giveawayId: input.giveawayId,
+      captureJobId: input.captureJobId,
+      status: "blocked",
+      message:
+        "Login do Instagram obrigatorio. Execute o login manual para salvar a sessao antes de iniciar a captura.",
+      details: {
+        authStatePath,
+        authenticated: false,
+      },
+    });
+  }
+
   const openingMessage = hasAuthState
     ? "Acessando publicacao com sessao autenticada..."
     : "Acessando publicacao sem sessao autenticada...";

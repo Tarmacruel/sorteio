@@ -65,13 +65,13 @@ npx playwright install chromium
 
 Garanta tambem que o Redis local esteja rodando em `redis://localhost:6379`, pois a captura automatica usa BullMQ.
 
-Para usar uma sessao autenticada do Instagram no worker, rode:
+Antes de iniciar qualquer captura, salve uma sessao autenticada do Instagram:
 
 ```bash
 npm run instagram:auth
 ```
 
-O script abre o Chromium em modo visivel para login manual e salva somente o `storageState` em `storage/instagram-auth.json`. Usuario e senha nao sao salvos pela aplicacao.
+O script abre o Chromium em modo visivel para login manual e salva somente o `storageState` em `storage/instagram-auth.json`. Usuario e senha nao sao salvos pela aplicacao. Sem esse arquivo, a API bloqueia o inicio da captura e solicita login manual.
 
 ## Execucao
 
@@ -120,7 +120,7 @@ Responsabilidades implementadas:
 - Validar URL de publicacao do Instagram.
 - Abrir Chromium headless.
 - Acessar a postagem publica.
-- Usar `storage/instagram-auth.json` quando existir, sem armazenar credenciais.
+- Exigir `storage/instagram-auth.json`, sem armazenar credenciais.
 - Clicar em botoes de "ver mais comentarios" quando disponiveis.
 - Rolar o painel de comentarios progressivamente.
 - Extrair username, texto e data/hora quando disponivel.

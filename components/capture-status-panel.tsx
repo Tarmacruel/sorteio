@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Activity, AlertCircle, Ban, CheckCircle2, Clock3, Loader2, Play, RefreshCcw } from "lucide-react";
+import { Activity, AlertCircle, Ban, CheckCircle2, Clock3, Loader2, LogIn, Play, RefreshCcw } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,6 +38,11 @@ type CaptureState = {
     capturedAt?: string | null;
     instagramPostUrl: string;
   } | null;
+  instagramAuth: {
+    exists: boolean;
+    path: string;
+    updatedAt?: string | null;
+  };
   stats: {
     captured: number;
     valid: number;
@@ -140,6 +145,7 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
   const [state, setState] = React.useState<CaptureState | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isMutating, setIsMutating] = React.useState(false);
+  const [isStartingAuth, setIsStartingAuth] = React.useState(false);
   const [now, setNow] = React.useState(() => Date.now());
 
   const load = React.useCallback(async () => {
@@ -165,6 +171,14 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
   }, []);
 
   async function startCapture() {
+    if (!state?.instagramAuth.exists) {
+      toast({
+        title: "Login do Instagram obrigatorio",
+        description: "Abra o login do Instagram e conclua a autenticacao manual antes da captura.",
+      });
+      return;
+    }
+
     setIsMutating(true);
     let response: Response;
     let data: { error?: string } = {};
@@ -189,6 +203,37 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
     }
 
     toast({ title: "Captura enfileirada", description: "O worker Playwright assumira o job." });
+    await load();
+  }
+
+  async function startInstagramAuth() {
+    setIsStartingAuth(true);
+    let response: Response;
+    let data: { message?: string; error?: string } = {};
+
+    try {
+      response = await fetchWithTimeout("/api/instagram/auth", { method: "POST" }, 8_000);
+      data = await response.json().catch(() => ({}));
+    } catch {
+      setIsStartingAuth(false);
+      toast({
+        title: "Login nao iniciado",
+        description: "Nao foi possivel abrir a janela de login. Rode `npm run instagram:auth` no terminal.",
+      });
+      return;
+    }
+
+    setIsStartingAuth(false);
+
+    if (!response.ok) {
+      toast({ title: "Login nao iniciado", description: data.error ?? "Tente executar `npm run instagram:auth`." });
+      return;
+    }
+
+    toast({
+      title: "Login do Instagram aberto",
+      description: data.message ?? "Conclua o login manualmente na janela aberta.",
+    });
     await load();
   }
 
@@ -238,6 +283,7 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
   const canReview = isCompleted || isPartial;
   const capturedCount = Math.max(state?.stats.captured ?? 0, job?.commentsFound ?? 0, job?.commentsSaved ?? 0);
   const expectedCount = job?.expectedCommentsCount ?? null;
+  const hasInstagramAuth = Boolean(state?.instagramAuth.exists);
   const activeStep = job?.status === "queued" ? "Aguardando worker iniciar..." : job?.currentStep;
   const elapsedTime = formatElapsedTime(job?.startedAt, job?.finishedAt, now);
   const lastUpdatedAt = latestLog?.at ?? job?.startedAt ?? job?.finishedAt ?? null;
@@ -263,7 +309,45 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
               <Play className="size-4" />
               <AlertTitle>Nenhuma captura iniciada</AlertTitle>
               <AlertDescription>
-                Inicie a captura automatica para que o worker acesse a postagem e salve comentarios publicos.
+                Faca login no Instagram e inicie a captura automatica para que o worker acesse a postagem e salve
+                comentarios carregaveis.
+              </AlertDescription>
+            </Alert>
+          ) : null}
+
+          {!hasInstagramAuth && !isLoading ? (
+            <Alert variant="destructive">
+              <AlertCircle className="size-4" />
+              <AlertTitle>Login do Instagram obrigatorio</AlertTitle>
+              <AlertDescription>
+                <div className="space-y-3">
+                  <p>
+                    A captura nao sera iniciada sem uma sessao Playwright salva. Clique em abrir login, faca a
+                    autenticacao manual na janela do Instagram e aguarde a sessao ser salva.
+                  </p>
+                  <div className="text-xs text-destructive/80">Arquivo esperado: {state?.instagramAuth.path}</div>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Button type="button" onClick={startInstagramAuth} disabled={isStartingAuth}>
+                      {isStartingAuth ? <Loader2 className="size-4 animate-spin" /> : <LogIn className="size-4" />}
+                      Abrir login do Instagram
+                    </Button>
+                    <Button type="button" variant="outline" onClick={load}>
+                      <RefreshCcw className="size-4" />
+                      Verificar login
+                    </Button>
+                  </div>
+                </div>
+              </AlertDescription>
+            </Alert>
+          ) : null}
+
+          {hasInstagramAuth ? (
+            <Alert>
+              <CheckCircle2 className="size-4" />
+              <AlertTitle>Sessao do Instagram pronta</AlertTitle>
+              <AlertDescription>
+                O worker usara a sessao autenticada salva em {state?.instagramAuth.path}
+                {state?.instagramAuth.updatedAt ? ` desde ${formatDateTime(state.instagramAuth.updatedAt)}.` : "."}
               </AlertDescription>
             </Alert>
           ) : null}
@@ -485,10 +569,16 @@ export function CaptureStatusPanel({ giveawayId }: { giveawayId: string }) {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button onClick={startCapture} disabled={isMutating || isActive}>
+            <Button onClick={startCapture} disabled={isMutating || isActive || !hasInstagramAuth}>
               {isMutating ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4" />}
               Iniciar captura automatica
             </Button>
+            {!hasInstagramAuth ? (
+              <Button type="button" variant="outline" onClick={startInstagramAuth} disabled={isStartingAuth}>
+                {isStartingAuth ? <Loader2 className="size-4 animate-spin" /> : <LogIn className="size-4" />}
+                Abrir login do Instagram
+              </Button>
+            ) : null}
             <Button variant="outline" onClick={cancelCapture} disabled={isMutating || !canCancel}>
               <Ban className="size-4" />
               Cancelar captura

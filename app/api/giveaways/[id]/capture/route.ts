@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { enqueueInstagramCapture, removeInstagramCaptureJob } from "@/lib/queue";
+import { getInstagramAuthStateStatus } from "@/lib/instagram-auth";
 import { registerAuditLog } from "@/services/audit.service";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +31,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   return NextResponse.json({
     job,
     giveaway,
+    instagramAuth: getInstagramAuthStateStatus(),
     stats: {
       captured,
       valid,
@@ -48,6 +50,18 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
 
   if (["capturing", "drawn"].includes(giveaway.status)) {
     return NextResponse.json({ error: "Este sorteio nao pode iniciar uma nova captura agora." }, { status: 409 });
+  }
+
+  const instagramAuth = getInstagramAuthStateStatus();
+  if (!instagramAuth.exists) {
+    return NextResponse.json(
+      {
+        error:
+          "Login do Instagram obrigatorio. Abra o login do Instagram, conclua a autenticacao manual e tente iniciar a captura novamente.",
+        instagramAuth,
+      },
+      { status: 428 },
+    );
   }
 
   const captureJob = await prisma.instagramCaptureJob.create({

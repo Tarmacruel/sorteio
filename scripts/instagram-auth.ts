@@ -1,10 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright";
+import { getInstagramAuthStatePath } from "@/lib/instagram-auth";
 
 function resolveAuthStatePath() {
-  const configuredPath = process.env.INSTAGRAM_AUTH_STATE_PATH ?? "storage/instagram-auth.json";
-  return path.isAbsolute(configuredPath) ? configuredPath : path.resolve(process.cwd(), configuredPath);
+  return getInstagramAuthStatePath();
 }
 
 async function main() {
