@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --hostname localhost --port 4000",
     "build": "next build",
-    "start": "next start",
+    "start": "next start --hostname localhost --port 4000",
     "typecheck": "tsc --noEmit",
     "instagram:auth": "tsx scripts/instagram-auth.ts",
     "worker:dev": "tsx workers/instagram-capture.worker.ts",

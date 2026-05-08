@@ -66,8 +66,8 @@ function Get-AlivePid {
 
 function Find-FreePort {
   param(
-    [int] $StartPort = 3000,
-    [int] $EndPort = 3010
+    [int] $StartPort = 4000,
+    [int] $EndPort = 4010
   )
 
   for ($port = $StartPort; $port -le $EndPort; $port++) {
@@ -213,18 +213,18 @@ function Start-Worker {
 function Start-App {
   $existingPid = Get-AlivePid $AppPidFile
   if ($existingPid) {
-    $url = if (Test-Path $AppUrlFile) { Get-Content $AppUrlFile | Select-Object -First 1 } else { "http://127.0.0.1:3000" }
+    $url = if (Test-Path $AppUrlFile) { Get-Content $AppUrlFile | Select-Object -First 1 } else { "http://localhost:4000" }
     Write-Host "Web App: ja esta rodando com PID $existingPid em $url."
     return
   }
 
-  $port = Find-FreePort 3000 3010
-  $url = "http://127.0.0.1:$port"
+  $port = Find-FreePort 4000 4010
+  $url = "http://localhost:$port"
   $npm = Get-NpmCommand
 
   Write-Host "Web App: iniciando em $url..."
   $process = Start-Process -FilePath $npm `
-    -ArgumentList @("run", "dev", "--", "--hostname", "127.0.0.1", "--port", "$port") `
+    -ArgumentList @("exec", "--", "next", "dev", "--hostname", "localhost", "--port", "$port") `
     -WorkingDirectory $RepoRoot `
     -RedirectStandardOutput (Join-Path $LogDir "app.log") `
     -RedirectStandardError (Join-Path $LogDir "app-error.log") `
@@ -306,7 +306,7 @@ function Invoke-Start {
   Start-Worker
   Start-App
 
-  $url = if (Test-Path $AppUrlFile) { Get-Content $AppUrlFile | Select-Object -First 1 } else { "http://127.0.0.1:3000" }
+  $url = if (Test-Path $AppUrlFile) { Get-Content $AppUrlFile | Select-Object -First 1 } else { "http://localhost:4000" }
   Write-Host ""
   Write-Host "Sorteio rodando."
   Write-Host "App: $url"
@@ -326,7 +326,7 @@ function Invoke-Stop {
 function Invoke-Status {
   Ensure-Dirs
   $postgres = Get-PostgresService
-  $appUrl = if (Test-Path $AppUrlFile) { Get-Content $AppUrlFile | Select-Object -First 1 } else { "http://127.0.0.1:3000" }
+  $appUrl = if (Test-Path $AppUrlFile) { Get-Content $AppUrlFile | Select-Object -First 1 } else { "http://localhost:4000" }
 
   Write-Host "Status Sorteio"
   Write-Host "--------------"

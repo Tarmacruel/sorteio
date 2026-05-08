@@ -37,7 +37,7 @@ Copie `.env.example` para `.env`:
 ```env
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/sorteio?schema=public"
 REDIS_URL="redis://localhost:6379"
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
+NEXT_PUBLIC_APP_URL="http://localhost:4000"
 INSTAGRAM_AUTH_STATE_PATH="storage/instagram-auth.json"
 INSTAGRAM_CAPTURE_MAX_ITERATIONS=2500
 INSTAGRAM_CAPTURE_NO_GROWTH_LIMIT=30
@@ -98,7 +98,7 @@ Em outro terminal, rode o worker de captura:
 npm run worker:dev
 ```
 
-Abra `http://localhost:3000`.
+Abra `http://localhost:4000`.
 
 ## Fluxo principal
 
